@@ -1,0 +1,3 @@
+git+https://github.com/rev112/pyope.git
+numpy
+pymongo
