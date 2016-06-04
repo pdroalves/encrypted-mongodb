@@ -3,7 +3,7 @@
 
 from client import Client
 from secmongo import SecMongo
-import json
+from bson.json_util import dumps
 
 docs = [
 	{
@@ -91,11 +91,11 @@ docs = [
 		"tags":["Lannister","Baratheon","King"]
 	},
 	{
-		"name":"Lady Melissandre",
+		"name":"Lady Melisandre",
 		"age": 432,
 		"level":0,
 		"address":"Castle Black, naked",
-		"tags":["Witch","Hot","Ugly"]
+		"tags":["Melisandre","Witch","Hot","Ugly"]
 	}
 ]
 
@@ -116,32 +116,37 @@ for doc in docs:
 	ct = client.encrypt(doc)
 	s.insert(ct)
 
+
+
 print "Database:"
 print [client.decrypt(x)["name"] for x in s.find()]
 print ""
 print "Starks:"
-print [client.decrypt(x) for x in s.find(client.get_ibe_sk(["Stark"]),projection=["name","age"])]
+for x in s.find(client.get_ibe_sk(["Stark"]),projection=["name","age"]):
+	print dumps( client.decrypt( x ),indent = 4 )
 
 print ""
 print "Lannisters:"
-print [client.decrypt(x) for x in s.find(client.get_ibe_sk(["Lannister"]),projection=["name","age"])]
+for x in s.find(client.get_ibe_sk(["Lannister"]),projection=["name","age"]):
+	print dumps( client.decrypt( x ),indent = 4 )
 
 print ""
 print "Lannisters and Baratheons:"
 baratheon = client.get_ibe_sk(["Baratheon"])
 lannister = client.get_ibe_sk(["Lannister"])
-print [client.decrypt(x) for x in s.find([baratheon,lannister],projection=["name","age"])]
+for x in s.find([baratheon,lannister],projection=["name","age"]):
+	print dumps( client.decrypt( x ),indent = 4 )
 
 # print ""
 print "The oldest person:"
 elder = s.find(sort=[("age",SecMongo.DESCENDING)],projection=["name","age","level"]).next()
-print client.decrypt(elder)
+print dumps( client.decrypt(elder), indent=4 )
 
 # Will update melissandre age
 diff = client.encrypt({"$inc":{"level":20}},kind="update")
-print s.update(client.get_ibe_sk(["Witch"]),diff)
+s.update(client.get_ibe_sk(["Witch"]),diff)
 
 print ""
 print "The oldest person:"
 elder = s.find(sort=[("age",SecMongo.DESCENDING)],projection=["name","age","level"]).next()
-print client.decrypt(elder)
+print dumps( client.decrypt(elder), indent=4 )
