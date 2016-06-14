@@ -13,7 +13,7 @@ class AES(Cipher):
 
     # Generates a key using a hash of some passphrase
     @staticmethod
-    def keygen(passphrase, secure=256):
+    def keygen(passphrase, secure=128):
         # if secure == 256:
         #     h = SHA256.new()
         # elif secure == 512:

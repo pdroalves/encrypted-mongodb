@@ -10,6 +10,8 @@ import cipher.ibe as ibe
 import cipher.paillier as paillier
 import cipher.elgamal as elgamal
 from pyope import ope
+from datetime import timedelta
+from datetime import date
 
 class Client:
 	__supported_attr_types = ["static","keyword","h_add","h_mul","range","do_nothing"]
@@ -17,7 +19,7 @@ class Client:
 	__mapped_attr = {__keyword_attr:"keyword"}
 	ciphers = {}
 	
-	def __init__(self,keys):
+	def __init__(self,keys,ope_in_range=ope.ValueRange(0,10**6),ope_out_range=ope.ValueRange(0,10**8)):
 
         # Initializes all ciphers
 		AES = aes.AES()
@@ -38,7 +40,7 @@ class Client:
 		IBE.add_to_private_key("msk",keys["IBE"]["msk"])
 		IBE.add_to_private_key("mpk",keys["IBE"]["mpk"])
 
-		OPE = ope.OPE(keys["OPE"])
+		OPE = ope.OPE(keys["OPE"],in_range=ope_in_range,out_range=ope_out_range)
 
 		Dummy = dummy_cipher.Cipher()
 

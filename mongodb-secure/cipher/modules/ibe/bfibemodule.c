@@ -112,6 +112,10 @@ masterkeygen(PyObject *self, PyObject *args){
 	g1_new(mpk);
 
   cp_ibe_gen(msk,mpk);
+
+  bn_t n;
+  g1_get_ord(n);
+  bn_print(n);
   
   // printf("\nMaster public key:\n");
   // g1_print(mpk);
@@ -301,7 +305,7 @@ initBFIBE(void)
 
   // init and set eliptic curves 
   ep_curve_init();
-  ep_param_set_any_pairf();
+  // ep_param_set_any();
  
   (void) Py_InitModule("BFIBE", BFIBEMethods);
 }

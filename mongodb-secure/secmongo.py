@@ -8,7 +8,6 @@ from cipher import elgamal
 
 class StopLookingForThings(Exception): pass
 
-
 class SecMongo:
 	ASCENDING = pymongo.ASCENDING
 	DESCENDING = pymongo.DESCENDING
@@ -78,15 +77,19 @@ class SecMongo:
 			cursor = self.collection.find()
 
 		if sort:
-			cursor = cursor.sort(sort)
+			if cursor.count() > 0:
+				cursor = cursor.sort(sort)
 
-		# Selection by keywords requires a linear search.
-		for document in cursor:
-			if self.__eval_search(	keywords,
-									document[self.keyword_attr]
-										): 
-				yield self.collection.find_one({"_id":document["_id"]},projection=projection)
-
+		if len(keywords) > 0:
+			# Selection by keywords requires a linear search.
+			for document in cursor:
+				if self.__eval_search(	keywords,
+										document[self.keyword_attr]
+											): 
+					yield self.collection.find_one({"_id":document["_id"]},projection=projection)
+		else:
+			for result in cursor:
+				yield result
 	# 
 	# selection: a query in the same format required by find()
 	# diff: A single dict in the format {operation:{field1:Enc(value1),field2:Enc((value2),...}}
@@ -99,7 +102,6 @@ class SecMongo:
 		s = self.find(selection,projection=["_id"] + diff[operation].keys())
 
 		if operation in ["$inc","$dec"]:
-			
 			field_kind = "h_add"
 		
 			cipher = self.__ciphers[field_kind]
@@ -150,11 +152,12 @@ class SecMongo:
 			if type(sk) in [list,tuple]:
 				#OR
 				try:
-					for sk in query:
-						if self.__exists(sk,keywords):
+					for orsk in query:
+						if self.__exists(orsk,keywords):
 							raise StopLookingForThings()
 					return False
 				except StopLookingForThings:
+					return True
 					continue
 			else:
 				# AND

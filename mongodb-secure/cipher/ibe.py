@@ -23,7 +23,7 @@ class IBE(Cipher):
 	def private_keygen(self,identity):
 		msk = self.keys["priv"]["msk"]
 		assert type(msk) in [tuple,list]
-		assert type(identity) is str
+		assert type(identity) in [str,unicode]
 		assert all(isinstance(item, long) for item in msk)
 
 		[x,y,z,norm] = BFIBE.keygen_prv(tuple([identity]+msk))
@@ -31,7 +31,7 @@ class IBE(Cipher):
 
 	def encrypt(self,identity,pt):
 		assert type(self.keys["priv"]["mpk"]) is dict
-		assert type(identity) is str
+		assert type(identity) in [str,unicode]
 		assert type(pt) in (tuple,list)
 		assert all(isinstance(item, int) for item in pt)
 

@@ -117,7 +117,6 @@ for doc in docs:
 	s.insert(ct)
 
 
-
 print "Database:"
 print [client.decrypt(x)["name"] for x in s.find()]
 print ""
