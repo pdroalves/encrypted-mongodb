@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # coding: utf-8
 
 from client import Client
@@ -84,12 +84,16 @@ docs = [
 	}
 ]
 
+print "Instantiating the client"
+
 client = Client(Client.keygen())
 
 client.set_attr("address","static")
 client.set_attr("name","static")
 client.set_attr("tags","keyword")
 client.set_attr("age","static")
+
+print "Query encryption"
 
 print "Encrypt docs[0]"
 print docs[0]
