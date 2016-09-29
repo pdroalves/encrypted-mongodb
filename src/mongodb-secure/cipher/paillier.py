@@ -32,7 +32,7 @@ from Crypto.Random import random
 class Paillier(Cipher):
 
 	@staticmethod
-	def keygen(key_size=1024):
+	def keygen(key_size=3072):
 		# Generates a new key set
 
 		n = None

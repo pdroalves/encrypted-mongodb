@@ -1,4 +1,4 @@
-# mongodb-secure
+# A proof-of-concept searchable encryption backend for MongoDB
 
 [University of Campinas](http://www.unicamp.br), [Institute of Computing](http://www.ic.unicamp.br), Brazil.
 
@@ -10,13 +10,13 @@ Advisor: [Diego F. Aranha](http://www.ic.unicamp.br/~dfaranha). <br/>
 
 ## About
 
-This is a proof of concept implementation of the framework proposed by [Alves and Aranha 2016] with the purpose of offering a wrapper on MongoDB's Python driver that enables a application to store and query encrypted data on the database.
+This is a proof-of-concept implementation of the framework proposed by [Alves 2016] with the purpose of offering a wrapper on MongoDB's Python driver that enables a application to store and query encrypted data on the database.
 
 ## Citing
 Please cite using the template below:
 
 	@INPROCEEDINGS{Alves2016,
- 		author = {{Alves, Pedro and Aranha, Diego}},
+ 		author = {{Alves, Pedro}},
   		title = {{A framework for searching encrypted databases}},
   		year = 2016,
   		BOOKTITLE= {{Anais do XVI Simpósio Brasileiro em Segurança da Informação e de Sistemas Computacionais (SBSeg 2016)}},
@@ -25,11 +25,11 @@ Please cite using the template below:
 
 # Licensing
 
-mongodb-secure is released under an GPLv3 license.
+This code is released under a GPLv3 license.
 
 ## Disclaimer
 
-This is a proof of concept implementation. We do not recommend the use of this code on production and we do no claim that the cipher implementations here provided are correct or secure. Use at your own risk.
+This is a proof-of-concept implementation. We do not recommend the use of this code on production and we do not claim that the cipher implementations here provided are correct or secure. Use at your own risk.
 
 
 **Privacy Warning:** This site tracks visitor information.
