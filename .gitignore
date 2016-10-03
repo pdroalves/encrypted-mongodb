@@ -1,6 +1,9 @@
-*.swp __pycache__
+*.o
+*.png
+*.out
+*.pyc
+*.dat
 *.a
 *.so
 *.pyc
 *.swp
-*~
