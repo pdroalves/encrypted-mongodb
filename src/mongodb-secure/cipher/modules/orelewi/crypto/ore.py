@@ -36,6 +36,7 @@ from math import log
 # H  =>HASH: SHA256
 
 H = lambda x,y: int(hashlib.sha256(x+y).hexdigest(),16) % 3
+
 class ORESMALL():
     F = None
     pi = None
@@ -107,7 +108,9 @@ class ORESMALL():
 
         kl,h = ctL
         r,v = ctR[0],ctR[1:]
-    	result =  (v[h] - H(kl , r)) % 3 
+        print "hash: " + str(H(kl,r))
+        
+        result =  (v[h] - H(kl , r)) % 3 
         return result
 
     def cmp( self,a,b ):

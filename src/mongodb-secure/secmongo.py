@@ -65,7 +65,7 @@ class SecMongo:
 	def set_collection(self,collection):
 		assert type(collection) is str 
 		self.collection = self.db[collection]
-		self.index_collection = self.db["indexes-"+collection]
+		self.index_collection = self.db["customIndex"]
 
 	def find(self,index=None,projection=None):
 		if index is None:
@@ -80,24 +80,12 @@ class SecMongo:
 		#  between 30 and 40
 		#  
 		#  The query MUST be encrypted
-
-		# Get the tree root
-		node = self.index_collection.find_one({"root":"1"})
-		while node is not None:
-			ctR = node["ctR"] # b
-			r = self.__ciphers["index"].compare(ctL,ctR)
-			if r == 0:
-				# Found
-				# a == b
-				return self.collection.find({"index":{"$in":node["index"]}})
-			elif r == 1:
-				# a > b
-				node = self.index_collection.find_one({"_id":ObjectId(node["right"])})
-			else:
-				# a < b
-				node = self.index_collection.find_one({"_id":ObjectId(node["left"])})
-				assert r == 2
-		return None
+		
+		result = self.db.system_js.walk(ctL)
+		if result is not None:
+			return self.collection.find({"index":{"$in":result["index"]}})
+		else:
+			return None
 	# 
 	# selection: a query in the same format required by find()
 	# diff: A single dict in the format {operation:{field1:Enc(value1),field2:Enc((value2),...}}
@@ -148,7 +136,7 @@ class SecMongo:
 		return self.index_collection.insert_one(new_doc)		
 
 	def insert_indexed(self,roottree,data):
-		# Receives AVL tree that index a list of elements Lewi's scheme
+		# Receives AVL tree that indexes a list of elements Lewi's scheme
 		# 
 		# Each node contains a pair composed by the right side of a ciphertext and
 		# the index of a related element in the list data (IndexNode)
