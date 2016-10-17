@@ -23,7 +23,7 @@ Please cite using the template below:
 	}
 
 
-# Licensing
+## Licensing
 
 This code is released under a GPLv3 license.
 
