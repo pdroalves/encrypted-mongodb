@@ -28,7 +28,8 @@ import cipher.cipher as dummy_cipher
 import cipher.aes as aes
 import cipher.paillier as paillier
 import cipher.elgamal as elgamal
-from crypto.ore import ORESMALL as ore
+# from crypto.ore import ORESMALL as ore
+from crypto.pymodule.ore import ORE as ore
 from datetime import timedelta
 from datetime import date
 import struct
@@ -59,7 +60,7 @@ class Client:
 		ElGamal.add_to_private_key("d",keys["ElGamal"]["priv"]["d"])
 
 		ORE = ore()
-		ORE.keygen(keys["ORE"],n)
+		keys["ORE"] = ORE.keygen()
 
 		Dummy = dummy_cipher.Cipher()
 
@@ -74,7 +75,8 @@ class Client:
 	def keygen():
 		keys = {}
 		keys["AES"] = aes.AES.keygen("password")
-		keys["ORE"] = aes.AES.keygen("password")
+		# keys["ORE"] = self.ciphers["index"].keygen()
+		# keys["ORE"] = aes.AES.keygen("password")
 		keys["Paillier"] = paillier.Paillier.keygen()
 		keys["ElGamal"] = elgamal.ElGamal.keygen()
 

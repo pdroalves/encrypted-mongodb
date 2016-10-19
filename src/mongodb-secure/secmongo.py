@@ -25,7 +25,8 @@ import pymongo
 from pymongo import MongoClient
 from cipher import paillier
 from cipher import elgamal
-from crypto.ore import ORESMALL as ORE
+from crypto.pymodule.ore import ORE
+# from crypto.ore import ORESMALL as ORE
 from index.avltree import AVLTree
 from index.indexnode import IndexNode
 from bson.json_util import dumps
@@ -96,7 +97,7 @@ class SecMongo:
 			else:
 				# a < b
 				node = self.index_collection.find_one({"_id":ObjectId(node["left"])})
-				assert r == 2
+				assert r == -1
 		return None
 	# 
 	# selection: a query in the same format required by find()

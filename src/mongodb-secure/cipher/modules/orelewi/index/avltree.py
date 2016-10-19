@@ -32,7 +32,8 @@
 from index.simplenode import SimpleNode
 from index.encryptednode import EncryptedNode
 from index.indexnode import IndexNode
-from crypto.ore import ORESMALL as ORE
+from crypto.pymodule.ore import ORE as ore
+# from crypto.ore import ORESMALL as ORE
 
 class AVLTree:
 	left = None

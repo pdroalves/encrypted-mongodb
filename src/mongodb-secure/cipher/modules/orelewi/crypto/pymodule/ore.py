@@ -21,19 +21,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##########################################################################
 ##########################################################################
-from node import Node
-from crypto.pymodule.ore import ORE as ore
-# from crypto.ore import ORESMALL as ORE
 
-class EncryptedNode(Node):
-	value = None
-	_id = None
-	def __init__(self,value,_id=None):
-		# super(SimpleNode,self).__init__(x)
-		self.value = value
-		self._id = _id
-		
-	def compare(self,x):
-		# Compares x with self
-		# if super(SimpleNode,self).value == x:
-		return ORE.compare(x, self.value)
+import LewiWuOREBlkLF as oreLF
+
+class ORE():
+    d = None
+    n = None
+
+
+    # Generates a key using a hash of some passphrase
+    # message space size N > 0
+    # d-ary strings x = x_1x_2x_3...x_n
+    def keygen( self,d = 32, n = 8):
+        self.d = d
+        self.n = n
+
+        self.sk = oreLF.keygen(d,n)
+    	return self.sk
+
+    def encrypt( self, y ):
+        return  oreLF.encrypt(y,self.sk,self.d,self.n)
+
+    @staticmethod
+    def compare( ctL, ctR ):
+        return oreLF.compare(32,8,ctL,ctR)
