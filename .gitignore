@@ -3,9 +3,7 @@
 *.out
 *.pyc
 *.dat
-*.swp __pycache__
 *.a
 *.so
 *.pyc
 *.swp
-*~

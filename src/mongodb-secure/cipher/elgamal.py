@@ -38,7 +38,7 @@ class ElGamal(Cipher):
 		Cipher.__init__(self,keys)
 	
 	@staticmethod
-	def keygen(key_size=1024):
+	def keygen(key_size=3072):
 		#
 		# Public key: (p,alpha,beta)
 		# Private key: (d) 
