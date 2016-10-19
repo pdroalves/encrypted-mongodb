@@ -6,8 +6,8 @@ os.environ["CC"] = "clang"
 
 oreblk = Extension('LewiWuOREBlk',
           libraries = ['crypto','ssl', 'gmp'],
-          include_dirs = ['/usr/local/include','/opt/fastore'],
-					library_dirs = ['/usr/local/lib','/opt/fastore'],
+          include_dirs = ['/usr/local/include','../'],
+					library_dirs = ['/usr/local/lib','../'],
           sources = ['ore_blk_module.c',
                     "../crypto.c",
                     "../ore_blk.c",
@@ -18,12 +18,12 @@ oreblk = Extension('LewiWuOREBlk',
                           "-g",
                           "-lssl","-lcrypto"],
         extra_compile_args=[
-                  "-O0", "-Wall","-march=native"])
+                  "-O3", "-Wall","-march=native"])
 
 oreblk_leftright = Extension('LewiWuOREBlkLF',
           libraries = ['crypto','ssl', 'gmp'],
-          include_dirs = ['/usr/local/include','/opt/fastore'],
-          library_dirs = ['/usr/local/lib','/opt/fastore'],
+          include_dirs = ['/usr/local/include','../'],
+          library_dirs = ['/usr/local/lib','../'],
           sources = ['ore_blk_leftright_module.c',
                     "../crypto.c",
                     "../ore_blk_leftright.c",
@@ -34,7 +34,7 @@ oreblk_leftright = Extension('LewiWuOREBlkLF',
                           "-g",
                           "-lssl","-lcrypto"],
         extra_compile_args=[
-                  "-O0", "-Wall","-march=native"])
+                  "-O3", "-Wall","-march=native"])
 
 setup (name = 'LewiWuOREBlk',
        version = '1.0',
