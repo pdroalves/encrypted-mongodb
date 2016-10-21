@@ -23,6 +23,8 @@ import random
 import math
 import sys
 import auxiliar as Aux
+import json
+import os
 
 def miller_rabin(p,s=11):
     # using security parameter s=11, we have a error probability of less than
@@ -79,15 +81,44 @@ def is_prime(n):
          return True
      return False
 
+primes_to_remember_filename = "primes_to_remember.json"
+
 def generate_large_prime(k):
-    #print "Generating prime of %d bits" % k
-    #k is the desired bit length
-    r=100*(math.log(k,2)+1) #number of attempts max
-    while r>0:
-        #randrange is mersenne twister and is completely deterministic
-        #unusable for serious crypto purposes
-        n = random.randrange(2**(k-1),2**(k))
-        r-=1
-        if is_prime(n) == True:
-            return n
-    raise Exception("Failure after %d tries." % r)
+    print "Generating a prime of %d bits" % k
+
+    # We store sets of primes and return some of them chosen at random.
+    # This solution aims exclusively speed.
+    if not os.path.exists(primes_to_remember_filename):
+        f = open(primes_to_remember_filename,"w")
+        json.dump({},f)
+        f.close()
+    with open(primes_to_remember_filename,"r") as f:
+        try:
+            primes = json.load(f)
+        except Exception as e:
+            print e
+            primes = {}
+
+    if str(k) in primes.keys() and len(primes[str(k)]) > 5:
+        return random.choice(primes[str(k)])
+    else:
+        print len(primes[str(k)])
+        if str(k) not in primes.keys():
+            primes[str(k)] = []
+
+        #k is the desired bit length
+        rMax = 100*(math.log(k,2)+1) #number of attempts max
+        r = 0
+        while r < rMax:
+            #randrange is mersenne twister and is completely deterministic
+            #unusable for serious crypto purposes
+            n = random.randrange(2**(k-1),2**(k))
+            r += 1
+            if is_prime(n) == True:
+                primes[str(k)].append(n)
+                
+                with open(primes_to_remember_filename,"w") as f:
+                    json.dump(primes,f)
+                return n
+
+        raise Exception("Failure after %d tries." % r)

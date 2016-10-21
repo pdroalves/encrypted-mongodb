@@ -45,7 +45,7 @@ class SecMongo:
 	
 	__ciphers = {"index":None,"h_add":None,"h_mul":None}
 
-	def __init__(self,add_cipher_param=None,url=None):
+	def __init__(self,url=None, add_cipher_param=None):
 		assert url is None or type(url) == str
 
 		# Connects to database

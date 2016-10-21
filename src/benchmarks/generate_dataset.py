@@ -32,17 +32,8 @@ from random import randint,shuffle
 import loremipsum
 import json
 import sys
+from multiprocessing import Pool
 
-outputfilename = "synthetic_dataset.json"
-
-# Quantity of entries
-
-if len(sys.argv) > 1:
-	N = int(sys.argv[1])
-else:
-	N = pow(10,4)/2
-
-ages = range(0,N)
 # seed
 male_firstnames = (['Tanner','Leland','Noble','Elroy','Irvin','Monty','Michael','Kristopher','Gonzalo','Elmo','Britt','Demarcus','Joey','Russ','Ismael','Dale','Santos','Melvin','Clifford','Cedrick','Jamel','Gustavo','Duncan','Wyatt','Otha','Kim','Lane','Trinidad','Kareem','Marcos','Edwardo','Cristopher','Jeramy','Willis','Ronnie','Maxwell','Carmelo','Rudy','Ulysses','Norbert','Isreal','Andreas','Odell','Heath','Palmer','Brenton','Whitney','Herman','Clinton','Alphonso'])
 female_firstnames = (['Colette','Kayleen','Suellen','Serena','Linsey','Aline','Carry','Pearlene','Merlyn','Cindy','Tanja','Elvie','Yung','Lahoma','Kayce','Taryn','Eufemia','Karyn','Chantelle','Indira','Katerine','Hue','Margeret','Ila','Beaulah','Selene','Ora','Krystal','Jeana','Devorah','Adele','Amberly','Susannah','Johna','Danica','Dulce','Kami','Janiece','Cleotilde','Venita','Shenika','Sharyn','Patrica','Gilma','Ivey','Fidela','Anamaria','Londa','Pearline','Elfriede'])
@@ -59,21 +50,15 @@ model = { 'email':None,
 		   'text':None
 		}
 
-
-# creates an empty dataset
-print "Generating a dataset with %d elements..." % N,
-shuffle(ages)
-dataset = []
-for i in xrange(N):
-	# clones
-	#print i
-
+def generate_record(i):
+	# clone
 	record = dict(model)
 
-	record["age"] = max((ages[i]+1) % 50,1) # 
+	record["age"] = randint(18,100)
 	record["country"] = countries[randint(0,len(countries)-1)]
 	record["surname"] = surnames[randint(0,len(surnames)-1)]
-	record["text"] = "".join(loremipsum.get_paragraphs(randint(1,2)))
+	record["text"] = "".join(loremipsum.get_paragraphs(randint(1,20)))
+	#record["text"] = ""
 
 	gender = randint(0,1)
 	if gender is 1:
@@ -84,11 +69,39 @@ for i in xrange(N):
 		record["firstname"] = female_firstnames[randint(0,len(female_firstnames)-1)]
 
 	record["email"] =  record["firstname"]+"."+record["surname"]+"@something.com"
+	return record
 
-	dataset.append(record)
+def gen_dataset(N):
+	# Quantity of entries
 
-output = open(outputfilename,"w+")
-json.dump(dataset,output)
+	ages = range(0,N)
 
-print "Done."
-print "Saved to %s" % outputfilename
+
+	# creates an empty dataset
+	print "Generating a dataset with %d elements..." % N,
+	shuffle(ages)
+	dataset = []
+	
+	print "Starting pool...",
+	p = Pool()
+	dataset = p.map(generate_record,range(N))
+	print "Done!"
+
+	return dataset
+
+if __name__ == "__main__":
+	outputfilename = "synthetic_dataset.json"
+
+	if len(sys.argv) > 1:
+		N = int(sys.argv[1])
+	else:
+		N = pow(10,4)/2
+
+	dataset = gen_dataset(N)
+
+	output = open(outputfilename,"w+")
+	json.dump(dataset,output)
+
+	print "Done."
+	print "Saved to %s" % outputfilename
+

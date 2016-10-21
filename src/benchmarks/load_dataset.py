@@ -38,6 +38,8 @@ from index.indexnode import IndexNode
 from index.avltree import AVLTree
 import timeit
 
+url = "192.168.1.201"
+
 #
 datafile = open("synthetic_dataset.json")
 dataset = json.load(datafile)
@@ -54,7 +56,7 @@ client.set_attr("country","static")
 client.set_attr("age","index")
 client.set_attr("text","static")
 
-s = SecMongo(add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"],2))
+s = SecMongo(url=url, add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"],2))
 s.open_database("benchmark")
 s.set_collection("encrypted")
 s.drop_collection()
@@ -106,7 +108,7 @@ def load_data():
 		count = count + 1
 		collection.insert(entry)
 
-unencrypted_client = MongoClient()
+unencrypted_client = MongoClient(url)
 db = unencrypted_client["benchmark"]
 collection = db["unencrypted"]
 collection.drop()
