@@ -10,16 +10,18 @@ class TestOREBlk(unittest.TestCase):
 	N = 100
 
 	def setUp(self):
-		self.sk = ore.keygen(32,8)
+		self.d = 2 # 
+		self.n = 8 # 
+		self.sk = ore.keygen(self.d,self.n)
 
 	def test_several_comparisons(self):
 		for _ in range(self.N):
-			pt1 = randint(0,pow(2,32));
-			pt2 = randint(0,pow(2,32));
-			ct1 = ore.encrypt(pt1,self.sk,32,8)
-			ct2 = ore.encrypt(pt2,self.sk,32,8)
+			pt1 = randint(0,pow(2,self.n));
+			pt2 = randint(0,pow(2,self.n));
+			ct1 = ore.encrypt(pt1,self.sk,self.d,self.n)
+			ct2 = ore.encrypt(pt2,self.sk,self.d,self.n)
 
-			r = ore.compare(32,8,ct1[0],ct1[1],ct2[0],ct2[1])
+			r = ore.compare(self.d,self.n,ct1[0],ct1[1],ct2[0],ct2[1])
 			r_expected = (1 if pt1 > pt2 else (-1 if pt1 < pt2 else 0))
 			if r != r_expected:
 				print "Fail! - pt1:\t%d,\tpt2:\t%d\texpected\t%d,\treceived %d\tdiff:\t%d\tdiffbits:\t%d" % (pt1,pt2,r_expected,r,pt1-pt2,log(pt1,2))
@@ -28,16 +30,18 @@ class TestOREBlk(unittest.TestCase):
 class TestOREBlkLF(unittest.TestCase):
 	N = 100
 	def setUp(self):
-		self.sk = oreLF.keygen(32,8)
+		self.d = 2 # 
+		self.n = 8 # 
+		self.sk = oreLF.keygen(self.d,self.n)
 
 	def test_several_comparisons_lf(self):
 		for _ in range(self.N):
-			pt1 = randint(0,pow(2,32));
-			pt2 = randint(0,pow(2,32));
-			ct1 = oreLF.encrypt(pt1,self.sk,32,8)
-			ct2 = oreLF.encrypt(pt2,self.sk,32,8)
+			pt1 = randint(0,pow(2,self.n));
+			pt2 = randint(0,pow(2,self.n));
+			ct1 = oreLF.encrypt(pt1,self.sk,self.d,self.n)
+			ct2 = oreLF.encrypt(pt2,self.sk,self.d,self.n)
 
-			r = oreLF.compare(32,8,ct1[0],ct2[1])
+			r = oreLF.compare(self.d,self.n,ct1[0],ct2[1])
 			r_expected = (1 if pt1 > pt2 else (-1 if pt1 < pt2 else 0))
 			if r != r_expected:
 				print "Fail! - pt1:\t%d,\tpt2:\t%d\texpected\t%d,\treceived %d\tdiff:\t%d\tdiffbits:\t%d" % (pt1,pt2,r_expected,r,pt1-pt2,log(pt1,2))

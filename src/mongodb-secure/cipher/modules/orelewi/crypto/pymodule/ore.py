@@ -25,14 +25,14 @@
 import LewiWuOREBlkLF as oreLF
 
 class ORE():
-    d = None
-    n = None
-
+    d = None # Number of blocks
+    n = None # Number of bits in each block
 
     # Generates a key using a hash of some passphrase
     # message space size N > 0
     # d-ary strings x = x_1x_2x_3...x_n
-    def keygen( self,d = 32, n = 8):
+    def keygen( self,d = 2, n = 8):
+        print "d: %d\tn:%d" % (d,n)
         self.d = d
         self.n = n
 
@@ -40,8 +40,9 @@ class ORE():
     	return self.sk
 
     def encrypt( self, y ):
+        print "d: %d\tn:%d" % (self.d,self.n)
         return  oreLF.encrypt(y,self.sk,self.d,self.n)
 
     @staticmethod
     def compare( ctL, ctR ):
-        return oreLF.compare(32,8,ctL,ctR)
+        return oreLF.compare(2,8,ctL,ctR)

@@ -6,11 +6,11 @@ from random import randint
 from math import log
 import pytest
 
-d = 32
+d = 2
 n = 8
 
-pt1 = randint(0,pow(2,d));
-pt2 = randint(0,pow(2,d));
+pt1 = randint(0,pow(2,n));
+pt2 = randint(0,pow(2,n));
 
 sk = ore.keygen(d,n)
 ct1 = ore.encrypt(pt1,sk,d,n)

@@ -154,7 +154,6 @@ py_ore_blk_encrypt(PyObject *self, PyObject *args){
 
   PyObject *ctxleft = Py_byte_array_To_PyArray(ctx->comp_left,_py_ore_blk_ciphertext_len_left(ctx->params));
   PyObject *ctxright = Py_byte_array_To_PyArray(ctx->comp_right,_py_ore_blk_ciphertext_len_right(ctx->params));
-
   ERR_CHECK(clear_ore_blk_ciphertext(ctx));
 
   return Py_BuildValue("OO",
