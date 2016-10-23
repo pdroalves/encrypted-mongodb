@@ -37,7 +37,12 @@ from time import time
 from index.indexnode import IndexNode
 from index.avltree import AVLTree
 import timeit
+import sys 
 
+if len(sys.argv) == 2:
+    url = sys.argv[1]
+else:
+    url = "localhost"
 
 def load_stored_functions(db):
     # 
@@ -121,7 +126,7 @@ client.set_attr("country","static")
 client.set_attr("age","index")
 client.set_attr("text","static")
 
-s = SecMongo(add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"],2))
+s = SecMongo(url=url,add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"],2))
 s.open_database("benchmark")
 s.set_collection("encrypted")
 s.drop_collection()
@@ -177,7 +182,7 @@ def load_data():
 		count = count + 1
 		collection.insert(entry)
 
-unencrypted_client = MongoClient()
+unencrypted_client = MongoClient(url)
 db = unencrypted_client["benchmark"]
 collection = db["unencrypted"]
 collection.drop()
