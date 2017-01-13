@@ -28,72 +28,72 @@
 from client import Client
 
 docs = [
-	{
-		"name":"John Snow",
-		"age": 18,
-		"address":"Castle Black, over a table",
+    {
+        "name":"John Snow",
+        "age": 18,
+        "address":"Castle Black, over a table",
 
-	},
-	{
-		"name":"Eddard Stark",
-		"age": 40,
-		"address":"King's landing, in a spear",
-	},
-	{
-		"name":"Catherine Stark",
-		"age": 35,
-		"address":"Hell, 123",
-	},
-	{
-		"name":"Rob Stark",
-		"age": 20,
-		"address":"Hell, 124",
-	},
-	{
-		"name":"Aria Stark",
-		"age": 12,
-		"address":"Braavos",
-	},
-	{
-		"name":"Sansa Stark",
-		"age": 16,
-		"address":"North",
-	},
-	{
-		"name":"Theon Greyjoy",
-		"age": 19,
-		"address":"No Dick's land",
-	},
-	{
-		"name":"Tywin Lannister",
-		"age": 55,
-		"address":"King's landing",
-	},
-	{
-		"name":"Cersei Lannister",
-		"age": 35,
-		"address":"King's landing",
-	},
-	{
-		"name":"Jaime Lannister",
-		"age": 35,
-		"address":"King's landing",
-	},
-	{
-		"name":"Robert Baratheon",
-		"age": 41,
-		"address":"King's landing",
-	},
-	{
-		"name":"Joffrey Baratheon",
-		"age": 17,
-		"address":"King's landing",
-	},
-	{
-		"name":"Lady Melissandre",
-		"age": 201,
-		"address":"Castle Black, naked",
-	}
+    },
+    {
+        "name":"Eddard Stark",
+        "age": 40,
+        "address":"King's landing, in a spear",
+    },
+    {
+        "name":"Catherine Stark",
+        "age": 35,
+        "address":"Hell, 123",
+    },
+    {
+        "name":"Rob Stark",
+        "age": 20,
+        "address":"Hell, 124",
+    },
+    {
+        "name":"Aria Stark",
+        "age": 12,
+        "address":"Braavos",
+    },
+    {
+        "name":"Sansa Stark",
+        "age": 16,
+        "address":"North",
+    },
+    {
+        "name":"Theon Greyjoy",
+        "age": 19,
+        "address":"No Dick's land",
+    },
+    {
+        "name":"Tywin Lannister",
+        "age": 55,
+        "address":"King's landing",
+    },
+    {
+        "name":"Cersei Lannister",
+        "age": 35,
+        "address":"King's landing",
+    },
+    {
+        "name":"Jaime Lannister",
+        "age": 35,
+        "address":"King's landing",
+    },
+    {
+        "name":"Robert Baratheon",
+        "age": 41,
+        "address":"King's landing",
+    },
+    {
+        "name":"Joffrey Baratheon",
+        "age": 17,
+        "address":"King's landing",
+    },
+    {
+        "name":"Lady Melissandre",
+        "age": 201,
+        "address":"Castle Black, naked",
+    }
 ]
 
 client = Client(Client.keygen(),n=202)
@@ -113,4 +113,4 @@ print "Encrypt search query"
 print client.get_ctL(41)
 print ""
 for doc in docs:
-	print "Decrypted: %s" % client.decrypt(client.encrypt(doc))
+    print "Decrypted: %s" % client.decrypt(client.encrypt(doc))

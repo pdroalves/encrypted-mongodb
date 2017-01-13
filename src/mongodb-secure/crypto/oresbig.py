@@ -48,14 +48,14 @@ class OREBIG():
     def keygen( self, passphrase,d = 100, n = 3 , N = 512):
         self.n = n
         k1 = PRF.keygen(passphrase+"1")
-    	k2 = PRF.keygen(passphrase+"2")
+        k2 = PRF.keygen(passphrase+"2")
         pi = URP(n=d,seed=42) # pi(a,b) = PRP(a)*b
 
         sk = (k1,k2,pi)
         self.d = d
         self.n = n
         assert pow(d,n) >= N
-    	return sk
+        return sk
 
     def encryptL( self, sk, x ):
         assert type(x) in (str,unicode)
@@ -74,7 +74,7 @@ class OREBIG():
             seqs = x[:i-1] if i >= 0 else ""
             z = pi.map_to( to_int(F2.encrypt(seqs)) % self.d )
             u[i] = F1.encrypt(seqs + str(z)), z
-    	return u
+        return u
 
     def encryptR( self, sk, y ):
         assert type(y) in (str,unicode)
@@ -89,7 +89,7 @@ class OREBIG():
         F2 = PRF()
         F2.add_to_private_key("key",k2)
 
-    	v = [None]*self.n
+        v = [None]*self.n
         for i in range(self.n):
             u = [None]*self.d
             for j in range(self.d):
@@ -99,7 +99,7 @@ class OREBIG():
 
                 u[j] = zij
             v[i] = u 
-    	return [r] + v
+        return [r] + v
 
     def encrypt( self, sk, y ):
         return (self.encryptL(sk, y), self.encryptR(sk, y))

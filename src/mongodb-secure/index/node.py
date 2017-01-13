@@ -22,8 +22,8 @@
 ##########################################################################
 ##########################################################################
 class Node(object):
-	value = None
-	def __init__(self,value):
-		self.value = value
-	def compare(self,x):
-		pass
+    value = None
+    def __init__(self,value):
+        self.value = value
+    def compare(self,x):
+        pass

@@ -37,72 +37,72 @@ from index.indexnode import IndexNode
 # Input data
 #
 docs = [
-	{
-		"name":"John Snow",
-		"age": 18,
-		"address":"Castle Black, over a table",
+    {
+        "name":"John Snow",
+        "age": 18,
+        "address":"Castle Black, over a table",
 
-	},
-	{
-		"name":"Eddard Stark",
-		"age": 40,
-		"address":"King's landing, in a spear",
-	},
-	{
-		"name":"Catherine Stark",
-		"age": 34,
-		"address":"Hell, 123",
-	},
-	{
-		"name":"Rob Stark",
-		"age": 20,
-		"address":"Hell, 124",
-	},
-	{
-		"name":"Aria Stark",
-		"age": 12,
-		"address":"Braavos",
-	},
-	{
-		"name":"Sansa Stark",
-		"age": 16,
-		"address":"North",
-	},
-	{
-		"name":"Theon Greyjoy",
-		"age": 19,
-		"address":"No Dick's land",
-	},
-	{
-		"name":"Tywin Lannister",
-		"age": 55,
-		"address":"King's landing",
-	},
-	{
-		"name":"Cersei Lannister",
-		"age": 35,
-		"address":"King's landing",
-	},
-	{
-		"name":"Jaime Lannister",
-		"age": 35,
-		"address":"King's landing",
-	},
-	{
-		"name":"Robert Baratheon",
-		"age": 41,
-		"address":"King's landing",
-	},
-	{
-		"name":"Joffrey Baratheon",
-		"age": 17,
-		"address":"King's landing",
-	},
-	{
-		"name":"Lady Melissandre",
-		"age": 201,
-		"address":"Castle Black, naked",
-	}
+    },
+    {
+        "name":"Eddard Stark",
+        "age": 40,
+        "address":"King's landing, in a spear",
+    },
+    {
+        "name":"Catherine Stark",
+        "age": 34,
+        "address":"Hell, 123",
+    },
+    {
+        "name":"Rob Stark",
+        "age": 20,
+        "address":"Hell, 124",
+    },
+    {
+        "name":"Aria Stark",
+        "age": 12,
+        "address":"Braavos",
+    },
+    {
+        "name":"Sansa Stark",
+        "age": 16,
+        "address":"North",
+    },
+    {
+        "name":"Theon Greyjoy",
+        "age": 19,
+        "address":"No Dick's land",
+    },
+    {
+        "name":"Tywin Lannister",
+        "age": 55,
+        "address":"King's landing",
+    },
+    {
+        "name":"Cersei Lannister",
+        "age": 35,
+        "address":"King's landing",
+    },
+    {
+        "name":"Jaime Lannister",
+        "age": 35,
+        "address":"King's landing",
+    },
+    {
+        "name":"Robert Baratheon",
+        "age": 41,
+        "address":"King's landing",
+    },
+    {
+        "name":"Joffrey Baratheon",
+        "age": 17,
+        "address":"King's landing",
+    },
+    {
+        "name":"Lady Melissandre",
+        "age": 201,
+        "address":"Castle Black, naked",
+    }
 ]
 #
 ##
@@ -120,20 +120,20 @@ client.set_attr("name","static")
 client.set_attr("age","index")
 
 # Setup the MongoDB driver
-s = SecMongo(add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"],2))
+s = SecMongo(add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"],2), url='mongodb://localhost:27010')
 s.open_database("test_ore")
 s.set_collection("gameofthrones")
 s.drop_collection()
 
 def build_index():
-	root = AVLTree([docs[0]["age"],0],nodeclass=IndexNode)
-	for i,doc in enumerate(docs[1:]):
-		root = root.insert([doc["age"],i+1])
+    root = AVLTree([docs[0]["age"],0],nodeclass=IndexNode)
+    for i,doc in enumerate(docs[1:]):
+        root = root.insert([doc["age"],i+1])
 
-	# assert it is correct
-	for doc in docs:
-		assert root.find(doc["age"])
-	return root
+    # assert it is correct
+    for doc in docs:
+        assert root.find(doc["age"])
+    return root
 
 # Build a index
 index = build_index()
@@ -142,7 +142,7 @@ index = build_index()
 index.encrypt(client.ciphers["index"])
 encrypted_docs = []
 for doc in docs:
-	encrypted_docs.append(client.encrypt(doc))
+    encrypted_docs.append(client.encrypt(doc))
 
 s.insert_indexed(index,encrypted_docs)
 print "Database:"
@@ -153,11 +153,11 @@ print result
 print ""
 print "Someone with 17 years old:"
 for doc in s.find(index=client.get_ctL(17),projection=["name","age","level"]):
-	print client.decrypt(doc)
+    print client.decrypt(doc)
 
 print ""
 print "Someone with 201 years old:"
 for doc in s.find(index=client.get_ctL(201),projection=["name","age","level"]):
-	print client.decrypt(doc)
+    print client.decrypt(doc)
 
 see = lambda x: "%s => %s %s" % (x.me.value, x.left.me.value if x.left else None, x.right.me.value if x.right else None)

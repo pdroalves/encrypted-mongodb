@@ -44,7 +44,7 @@ class ORESMALL():
     # Generates a key using a hash of some passphrase
     def keygen( self, passphrase,n = 16 ):
         self.n = n
-    	k = PRF.keygen(passphrase)
+        k = PRF.keygen(passphrase)
         pi = URP(n=self.n,seed=42)
 
         self.F = PRF()
@@ -54,24 +54,24 @@ class ORESMALL():
             self.F.encrypt(i)#Pre-computation
 
         self.sk = (k,pi)
-    	return self.sk
+        return self.sk
 
     def encryptL( self, sk, x ):
         assert log(x,2) < self.n
-    	assert type(x) in (int,long)
+        assert type(x) in (int,long)
         k,pi = sk
         pi.refresh()
 
         h = pi.map_to(x)
-    	ctL = (
-	    		self.F.encrypt( h ),
-	    		h
-    		)
-    	return ctL
+        ctL = (
+                self.F.encrypt( h ),
+                h
+            )
+        return ctL
 
     def encryptR( self, sk, y ):
 
-    	assert type(y) in (int,long)
+        assert type(y) in (int,long)
         assert log(y,2) < self.n
 
         k,pi = sk
@@ -80,9 +80,9 @@ class ORESMALL():
 
         r = numpy.random.bytes(128).encode("hex")
 
-    	bits = bin(y).partition("b")[2]
+        bits = bin(y).partition("b")[2]
 
-    	v = [None]*self.n
+        v = [None]*self.n
 
         ctR = [r]
         for i in range(self.n):
@@ -92,7 +92,7 @@ class ORESMALL():
                                     H ( self.F.encrypt(int(i)) , r )
                         ) % 3
                     )
-    	return ctR
+        return ctR
 
     def encrypt( self, y, sk = None ):
         if sk is None:
@@ -107,7 +107,7 @@ class ORESMALL():
 
         kl,h = ctL
         r,v = ctR[0],ctR[1:]
-    	result =  (v[h] - H(kl , r)) % 3 
+        result =  (v[h] - H(kl , r)) % 3 
         return result
 
     def cmp( self,a,b ):
