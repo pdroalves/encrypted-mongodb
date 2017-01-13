@@ -1,0 +1,8 @@
+loremipsum
+#git+https://github.com/pdroalves/ore_lewi.git
+git+https://github.com/rev112/pyope.git
+numpy
+pymongo
+git+https://github.com/attilaolah/intperm.py.git
+numpy
+pycrypto
