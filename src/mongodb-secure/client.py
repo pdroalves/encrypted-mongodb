@@ -28,7 +28,7 @@ import cipher.cipher as dummy_cipher
 import cipher.aes as aes
 import cipher.paillier as paillier
 import cipher.elgamal as elgamal
-from crypto.ore import ORESMALL as ore
+from crypto.ore import ORESMALL
 from datetime import timedelta
 from datetime import date
 import struct
@@ -58,7 +58,7 @@ class Client:
         ElGamal.add_to_public_key("beta",keys["ElGamal"]["pub"]["beta"])
         ElGamal.add_to_private_key("d",keys["ElGamal"]["priv"]["d"])
 
-        ORE = ore()
+        ORE = ORESMALL()
         ORE.keygen(keys["ORE"],n)
 
         Dummy = dummy_cipher.Cipher()

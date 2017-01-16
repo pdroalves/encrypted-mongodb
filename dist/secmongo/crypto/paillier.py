@@ -25,9 +25,9 @@ import sys
 import getopt
 import json
 import generate_prime as Prime
-import auxiliar as Aux
 from cipher import Cipher
 from Crypto.Random import random
+
 
 class Paillier(Cipher):
 
@@ -75,7 +75,7 @@ class Paillier(Cipher):
         if type(m) == str:
             m = int(m)
             
-        assert Aux.is_int(m)
+        assert isinstance(m, (int, long))
 
         pub = Cipher.get_public_key(self)
         assert pub.has_key("n")
@@ -99,7 +99,7 @@ class Paillier(Cipher):
         return str(c)
 
     def decrypt(self,c):
-        assert Aux.is_int(c)
+        assert isinstance(c, (int, long))
         c = long(c)    
 
         pub = Cipher.get_public_key(self)
@@ -120,8 +120,8 @@ class Paillier(Cipher):
         return m
 
     def h_operation(self,a,b,mod=None,fix=None):
-        assert Aux.is_int(a)
-        assert Aux.is_int(b)
+        assert isinstance(a, (int, long))
+        assert isinstance(b, (int, long))
         a = long(a)    
         b = long(b)    
 

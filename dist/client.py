@@ -24,50 +24,59 @@
 # This class is a conceptual implementation of the behavior that a standard
 # user should adopt to interact with mongodb-secure
 
-from secmongo.cipher import cipher as dummy_cipher
-from secmongo.cipher import aes
-from secmongo.cipher import paillier
-from secmongo.cipher import elgamal
-from secmongo.crypto.ore import ORESMALL as ore
+from secmongo.crypto import cipher as dummy_cipher
+from secmongo.crypto import aes
+from secmongo.crypto import paillier
+from secmongo.crypto import elgamal
+from secmongo.crypto.ore import ORESMALL
 from datetime import timedelta
 from datetime import date
 import struct
 
-oreEncoder = lambda x: int("".join([struct.pack(">I",ord(x)) for x in x]).encode("hex"),16)
-decode = lambda x: "".join([chr(int(x[8*i:8*(i+1)],16)) for i in range(len(x)/8)])
+
+def oreEncoder(x):
+    x_enc = [struct.pack(">I", ord(x)) for x in x]
+    return int("".join(x_enc).encode("hex"), 16)
+
+
+def decode(x):
+    x_dec = [chr(int(x[8 * i:8 * (i + 1)], 16)) for i in range(len(x) / 8)]
+    return "".join(x_dec)
+
 
 class Client:
-    __supported_attr_types = ["static","index","h_add","h_mul","do_nothing"]
+    __supported_attr_types = ["static", "index", "h_add", "h_mul",
+                              "do_nothing"]
     __mapped_attr = {}
     ciphers = {}
-    
-    def __init__(self,keys,n=100):
+
+    def __init__(self, keys, n=100):
 
         # Initializes all ciphers
         AES = aes.AES()
-        AES.add_to_private_key("key",keys["AES"])
+        AES.add_to_private_key("key", keys["AES"])
 
         Paillier = paillier.Paillier()
-        Paillier.add_to_private_key("lambda",keys["Paillier"]["priv"]["lambda"])
-        Paillier.add_to_public_key("n",keys["Paillier"]["pub"]["n"])
-        Paillier.add_to_public_key("g",keys["Paillier"]["pub"]["g"])
+        Paillier.add_to_private_key("lambda", keys["Paillier"]["priv"]["lambda"])
+        Paillier.add_to_public_key("n", keys["Paillier"]["pub"]["n"])
+        Paillier.add_to_public_key("g", keys["Paillier"]["pub"]["g"])
 
         ElGamal = elgamal.ElGamal()
-        ElGamal.add_to_public_key("p",keys["ElGamal"]["pub"]["p"])
-        ElGamal.add_to_public_key("alpha",keys["ElGamal"]["pub"]["alpha"])
-        ElGamal.add_to_public_key("beta",keys["ElGamal"]["pub"]["beta"])
-        ElGamal.add_to_private_key("d",keys["ElGamal"]["priv"]["d"])
+        ElGamal.add_to_public_key("p", keys["ElGamal"]["pub"]["p"])
+        ElGamal.add_to_public_key("alpha", keys["ElGamal"]["pub"]["alpha"])
+        ElGamal.add_to_public_key("beta", keys["ElGamal"]["pub"]["beta"])
+        ElGamal.add_to_private_key("d", keys["ElGamal"]["priv"]["d"])
 
-        ORE = ore()
-        ORE.keygen(keys["ORE"],n)
+        ORE = ORESMALL()
+        ORE.keygen(keys["ORE"], n)
 
         Dummy = dummy_cipher.Cipher()
 
-        self.ciphers = {"static":AES,
-                        "index":ORE,
-                        "h_add":Paillier,
-                        "h_mul":ElGamal,
-                        "do_nothing":Dummy}
+        self.ciphers = {"static": AES,
+                        "index": ORE,
+                        "h_add": Paillier,
+                        "h_mul": ElGamal,
+                        "do_nothing": Dummy}
 
     # Generates all keys
     @staticmethod
@@ -81,11 +90,11 @@ class Client:
         return keys
 
     # Encrypts a query
-    # 
+
     # pt: plaintex
     # kind: defines the purpose for which the document should be encrypted
     # parent: the parent key
-    def encrypt(self,pt,kind = "store",parent = None):    
+    def encrypt(self, pt, kind="store", parent=None):
         global oreEncoder
         assert type(pt) == dict
 
@@ -94,21 +103,21 @@ class Client:
         # finds the lef
         for key in pt:
             if type(pt[key]) == dict:
-                result[key] = self.encrypt(pt[key],kind=kind,parent=key)
-            elif parent in ["$inc","$dec","$set"]:
+                result[key] = self.encrypt(pt[key], kind=kind, parent=key)
+            elif parent in ["$inc", "$dec", "$set"]:
                 # Update query
                 op_kind = self.__mapped_attr[key]
-                
+
                 cipher = ciphers[op_kind]
                 result[key] = cipher.encrypt(pt[key])
 
             elif key == "$in":
-                if type(pt[key]) not in [list,tuple]:
+                if type(pt[key]) not in [list, tuple]:
                     result[key] = list(pt[key])
                 # Inside
                 op_kind = self.__mapped_attr[parent]
                 cipher = ciphers[op_kind]
-                
+
                 # Encrypts all items
                 result[key] = []
                 for value in pt[key]:
@@ -117,8 +126,8 @@ class Client:
 
             elif self.__mapped_attr[key] == "index":
                 # Encrypts as a index
-                # 
-                # Currently this only supports database records with 
+
+                # Currently this only supports database records with
                 # a single index element
 
                 op_kind = "index"
@@ -128,11 +137,11 @@ class Client:
                 ct = cipher.encrypt(pt[key])
                 result["index"] = ct[1]
 
-                # Encrypts as static        
+                # Encrypts as static
                 cipher = ciphers["static"]
                 result[key] = cipher.encrypt(pt[key])
             else:
-                if kind in ["search","update"]:
+                if kind in ["search", "update"]:
                     continue
                 op_kind = self.__mapped_attr[key]
                 cipher = ciphers[op_kind]
@@ -140,7 +149,7 @@ class Client:
         return result
 
     # Decrypts the return of a query
-    def decrypt(self,ct):    
+    def decrypt(self, ct):
         global decode
         assert type(ct) == dict
 
@@ -156,7 +165,7 @@ class Client:
                 result[key] = ct[key]
             elif type(ct[key]) == dict:
                 result[key] = self.decrypt(ct[key])
-            elif type(ct[key]) in [tuple,list]:    
+            elif type(ct[key]) in [tuple, list]:
                 op_kind = self.__mapped_attr[key]
                 cipher = ciphers[op_kind]
 
@@ -179,7 +188,7 @@ class Client:
 
         return result
 
-    def get_ctL(self,target):
+    def get_ctL(self, target):
         # Returns the left encryption of some target
         cipher = self.ciphers["index"]
         return cipher.encrypt(target)[0]
@@ -188,7 +197,7 @@ class Client:
         return tuple(self.__supported_attr_types)
 
     # Maps an attribute to one of those supported fields
-    def set_attr(self,field,t):
+    def set_attr(self, field, t):
         assert type(field) == str
         assert type(t) == str
         assert t in self.__supported_attr_types

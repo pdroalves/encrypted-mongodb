@@ -28,8 +28,15 @@ from Crypto import Random
 import hashlib
 
 BS = 16
-pad = lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS) 
-unpad = lambda s : s[:-ord(s[len(s)-1:])]
+
+
+def pad(s):
+    return s + (BS - len(s) % BS) * chr(BS - len(s) % BS)
+
+
+def unpad(s):
+    return s[:-ord(s[len(s)-1:])]
+
 
 class AES(Cipher):
 
@@ -46,19 +53,18 @@ class AES(Cipher):
         # return h.hexdigest()
         return hashlib.sha256(passphrase).digest()
 
-    def encrypt( self, raw ):
+    def encrypt(self, raw):
         raw = pad(str(raw))
-        iv = Random.new().read( CryptoCipher.AES.block_size )
-        cipher = CryptoCipher.AES.new(
-                        self.keys["priv"]["key"], 
-                        CryptoCipher.AES.MODE_CBC, 
-                        iv )
-        return base64.b64encode( iv + cipher.encrypt( raw ) ) 
+        iv = Random.new().read(CryptoCipher.AES.block_size)
+        cipher = CryptoCipher.AES.new(self.keys["priv"]["key"],
+                                      CryptoCipher.AES.MODE_CBC,
+                                      iv)
+        return base64.b64encode(iv + cipher.encrypt(raw))
 
-    def decrypt( self, enc ):
+    def decrypt(self, enc):
         enc = base64.b64decode(enc)
         iv = enc[:16]
-        cipher = CryptoCipher.AES.new( self.keys["priv"]["key"],
-                                        CryptoCipher.AES.MODE_CBC,
-                                        iv )
-        return unpad(cipher.decrypt( enc[16:] ))
+        cipher = CryptoCipher.AES.new(self.keys["priv"]["key"],
+                                      CryptoCipher.AES.MODE_CBC,
+                                      iv)
+        return unpad(cipher.decrypt(enc[16:]))

@@ -22,7 +22,6 @@
 import random
 import math
 import sys
-import auxiliar as Aux
 
 def miller_rabin(p,s=11):
     # using security parameter s=11, we have a error probability of less than

@@ -27,7 +27,6 @@ import random
 import json
 import os
 import generate_prime as Prime
-import auxiliar as Aux
 from Crypto.Random import random
 from cipher import Cipher
 
@@ -81,7 +80,7 @@ class ElGamal(Cipher):
         if type(m) == str:
             m = int(m)
             
-        assert Aux.is_int(m)
+        assert isinstance(m, (int, long))
         
         pub = Cipher.get_public_key(self)
 
