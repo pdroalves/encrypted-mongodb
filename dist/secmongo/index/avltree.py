@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#coding:utf-8
+# coding:utf-8
 ##########################################################################
 ##########################################################################
 #
@@ -22,16 +22,16 @@
 ##########################################################################
 ##########################################################################
 # About this class:
-# 
+#
 # - It has two pointers: left and right
 #     * left points to AVLTree elements compared as lower than the root
 #     * right points to AVLTree elements compared as bigger than the root
 # - The element "me" is the real content of this node
 # - This doesn't build a balanced tree
 #
-from secmongo.index.simplenode import SimpleNode
-from secmongo.index.encryptednode import EncryptedNode
-from secmongo.index.indexnode import IndexNode
+from .simplenode import SimpleNode
+from .encryptednode import EncryptedNode
+from .indexnode import IndexNode
 from secmongo.crypto.ore import ORESMALL as ORE
 
 

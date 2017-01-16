@@ -21,7 +21,7 @@
 ##########################################################################
 ##########################################################################
 import base64
-from cipher import Cipher
+from .cipher import Cipher
 from Crypto import Cipher as CryptoCipher
 from Crypto import Random
 # from Crypto.Hash import SHA256

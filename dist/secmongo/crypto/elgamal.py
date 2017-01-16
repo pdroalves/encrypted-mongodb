@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8
+# coding: utf-8
 ###########################################################################
 ##########################################################################
 #
@@ -28,11 +28,12 @@ import json
 import os
 import generate_prime as Prime
 from Crypto.Random import random
-from cipher import Cipher
+from .cipher import Cipher
+
 
 class ElGamal(Cipher):
 
-    def __init__(self,keys=None,exponential_mode=False):
+    def __init__(self, keys=None, exponential_mode=False):
         self.exponential_mode = exponential_mode
         Cipher.__init__(self,keys)
     

@@ -23,11 +23,11 @@
 ##########################################################################
 import pymongo
 from pymongo import MongoClient
-from crypto import paillier
-from crypto import elgamal
-from crypto.ore import ORESMALL as ORE
-from index.avltree import AVLTree
-from index.indexnode import IndexNode
+from .crypto import paillier
+from .crypto import elgamal
+from .crypto.ore import ORESMALL as ORE
+from .index.avltree import AVLTree
+from .index.indexnode import IndexNode
 from bson.json_util import dumps
 from bson.objectid import ObjectId
 import json

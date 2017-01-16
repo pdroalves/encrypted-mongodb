@@ -42,7 +42,7 @@ for i in elements[1:]:
     # print i
     assert root.find(i)
 print "It passed!"
-%timeit root.find(30)
+# %timeit root.find(30)
 
 print "Time to test encryption..."
 elements = range(1,N)

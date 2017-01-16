@@ -27,8 +27,8 @@ import hashlib
 import numpy
 import intperm as PRP
 from operator import xor
-from aesdet import AESDet as PRF
-from urpint import URPINT as URP
+from .aesdet import AESDet as PRF
+from .urpint import URPINT as URP
 from math import log
 
 # F  => PRF: AES-128

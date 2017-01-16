@@ -25,7 +25,7 @@ import sys
 import getopt
 import json
 import generate_prime as Prime
-from cipher import Cipher
+from .cipher import Cipher
 from Crypto.Random import random
 
 

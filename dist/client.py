@@ -28,7 +28,7 @@ from secmongo.crypto import cipher as dummy_cipher
 from secmongo.crypto import aes
 from secmongo.crypto import paillier
 from secmongo.crypto import elgamal
-from secmongo.crypto.ore import ORESMALL
+from secmongo.crypto.ore import ORESMALL as ORE
 from datetime import timedelta
 from datetime import date
 import struct
@@ -67,7 +67,6 @@ class Client:
         ElGamal.add_to_public_key("beta", keys["ElGamal"]["pub"]["beta"])
         ElGamal.add_to_private_key("d", keys["ElGamal"]["priv"]["d"])
 
-        ORE = ORESMALL()
         ORE.keygen(keys["ORE"], n)
 
         Dummy = dummy_cipher.Cipher()

@@ -27,8 +27,8 @@ import hashlib
 import numpy
 import intperm as PRP
 from operator import xor
-from aesdet import AESDet as PRF
-from urpint import URPINT as URP
+from .aesdet import AESDet as PRF
+from .urpint import URPINT as URP
 from math import log
 
 # F  => PRF: AES-128
@@ -133,14 +133,14 @@ class OREBIG():
         else:
             return 1
 
-ore = OREBIG()
-sk = ore.keygen("oi")
-ctA = ore.encrypt(sk, "ABC")
-ctB = ore.encrypt(sk, "BAC")
-ctC = ore.encrypt(sk, "BCA")
+# ore = OREBIG()
+# sk = ore.keygen("oi")
+# ctA = ore.encrypt(sk, "ABC")
+# ctB = ore.encrypt(sk, "BAC")
+# ctC = ore.encrypt(sk, "BCA")
 
-assert OREBIG.compare(ctA[0], ctB[1]) == 1
-assert OREBIG.compare(ctB[0], ctB[1]) == 0
-assert OREBIG.compare(ctC[0], ctB[1]) == 2
+# assert OREBIG.compare(ctA[0], ctB[1]) == 1
+# assert OREBIG.compare(ctB[0], ctB[1]) == 0
+# assert OREBIG.compare(ctC[0], ctB[1]) == 2
 
-print "All tests passed!"
+# print "All tests passed!"
