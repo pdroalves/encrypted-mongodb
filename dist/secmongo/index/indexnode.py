@@ -23,6 +23,7 @@
 ##########################################################################
 from .node import Node
 
+
 class IndexNode(Node):
     value = None
     _id = []

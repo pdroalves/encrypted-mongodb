@@ -28,7 +28,7 @@ from secmongo.crypto import cipher as dummy_cipher
 from secmongo.crypto import aes
 from secmongo.crypto import paillier
 from secmongo.crypto import elgamal
-from secmongo.crypto.ore import ORESMALL as ORE
+from secmongo.crypto.ore import ORESMALL as ore
 from datetime import timedelta
 from datetime import date
 import struct
@@ -57,7 +57,8 @@ class Client:
         AES.add_to_private_key("key", keys["AES"])
 
         Paillier = paillier.Paillier()
-        Paillier.add_to_private_key("lambda", keys["Paillier"]["priv"]["lambda"])
+        Paillier.add_to_private_key("lambda",
+                                    keys["Paillier"]["priv"]["lambda"])
         Paillier.add_to_public_key("n", keys["Paillier"]["pub"]["n"])
         Paillier.add_to_public_key("g", keys["Paillier"]["pub"]["g"])
 
@@ -67,6 +68,7 @@ class Client:
         ElGamal.add_to_public_key("beta", keys["ElGamal"]["pub"]["beta"])
         ElGamal.add_to_private_key("d", keys["ElGamal"]["priv"]["d"])
 
+        ORE = ore()
         ORE.keygen(keys["ORE"], n)
 
         Dummy = dummy_cipher.Cipher()

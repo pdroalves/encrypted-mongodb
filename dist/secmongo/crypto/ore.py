@@ -32,49 +32,47 @@ from .urpint import URPINT as URP
 from math import log
 
 # F  => PRF: AES-128
-# pi => PRP: IntPerm 
+# pi => PRP: IntPerm
 # H  =>HASH: SHA256
+H = lambda x, y: int(hashlib.sha256(x+y).hexdigest(),16) % 3
 
-H = lambda x,y: int(hashlib.sha256(x+y).hexdigest(),16) % 3
+
 class ORESMALL():
     F = None
     pi = None
     sk = None
 
     # Generates a key using a hash of some passphrase
-    def keygen( self, passphrase,n = 16 ):
+    def keygen(self, passphrase, n=16):
         self.n = n
         k = PRF.keygen(passphrase)
-        pi = URP(n=self.n,seed=42)
+        pi = URP(n=self.n, seed=42)
 
         self.F = PRF()
-        self.F.add_to_private_key("key",k)
+        self.F.add_to_private_key("key", k)
 
         for i in xrange(n):
-            self.F.encrypt(i)#Pre-computation
+            self.F.encrypt(i)  # Pre-computation
 
-        self.sk = (k,pi)
+        self.sk = (k, pi)
         return self.sk
 
-    def encryptL( self, sk, x ):
-        assert log(x,2) < self.n
-        assert type(x) in (int,long)
-        k,pi = sk
+    def encryptL(self, sk, x):
+        assert log(x, 2) < self.n
+        assert type(x) in (int, long)
+        k, pi = sk
         pi.refresh()
 
         h = pi.map_to(x)
-        ctL = (
-                self.F.encrypt( h ),
-                h
-            )
+        ctL = (self.F.encrypt(h), h)
         return ctL
 
-    def encryptR( self, sk, y ):
+    def encryptR(self, sk, y):
 
-        assert type(y) in (int,long)
-        assert log(y,2) < self.n
+        assert type(y) in (int, long)
+        assert log(y, 2) < self.n
 
-        k,pi = sk
+        k, pi = sk
 
         pi.refresh()
 
@@ -86,33 +84,30 @@ class ORESMALL():
 
         ctR = [r]
         for i in range(self.n):
-            ctR.append( 
-                        (
-                            self.cmp( pi.map_from(int(i)), y ) + 
-                                    H ( self.F.encrypt(int(i)) , r )
-                        ) % 3
-                    )
+            ctR.append((self.cmp(pi.map_from(int(i)), y) +
+                        H(self.F.encrypt(int(i)), r)) % 3)
         return ctR
 
-    def encrypt( self, y, sk = None ):
+    def encrypt(self, y, sk=None):
         if sk is None:
             sk = self.sk
-        k,pi = sk
-        assert log(y,2) < self.n
+        k, pi = sk
+        assert log(y, 2) < self.n
         return (self.encryptL(sk, y), self.encryptR(sk, y))
 
     @staticmethod
-    def compare( ctL, ctR ):
+    def compare(ctL, ctR):
         global H
 
-        kl,h = ctL
-        r,v = ctR[0],ctR[1:]
-        result =  (v[h] - H(kl , r)) % 3 
+        kl, h = ctL
+        r, v = ctR[0], ctR[1:]
+        print(kl, h, r, v)
+        result = (v[h] - H(kl, r)) % 3
         return result
 
-    def cmp( self,a,b ):
-        assert type(a) in (int,long)
-        assert type(b) in (int,long)
+    def cmp(self, a, b):
+        assert type(a) in (int, long)
+        assert type(b) in (int, long)
 
         if a < b:
             return -1
