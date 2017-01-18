@@ -101,7 +101,6 @@ class ORESMALL():
 
         kl, h = ctL
         r, v = ctR[0], ctR[1:]
-        print(kl, h, r, v)
         result = (v[h] - H(kl, r)) % 3
         return result
 
