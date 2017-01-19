@@ -39,4 +39,4 @@ class EncryptedNode(Node):
         else:
             x = other
         # Compares other with self
-        return ORE.compare(ore.encrypt(x)[0], self.value[1])
+        return ORE.compare(x[0], self.value[1])

@@ -68,8 +68,8 @@ class AVLTree:
             return 0
 
     # Receives an element comparable to "me"
-    def find(self, x, ore=None):
-        r = self.me.compare(x, ore=ore)
+    def find(self, x):
+        r = self.me.compare(x)
         if self.is_leaf() and r != 0:
             # There is no element compatible to x in this tree
             return None
@@ -88,9 +88,9 @@ class AVLTree:
             return None
 
     # Receives an element comparable to "me"
-    def insert(self, x, ore=None):
+    def insert(self, x):
         # x = [value, id]
-        r = self.me.compare(x, ore=ore)
+        r = self.me.compare(x)
         if r == 0:
             # The element already exists in the tree
             self.me._id = [x[1]] + self.me._id
@@ -104,7 +104,7 @@ class AVLTree:
                 self.left = AVLTree(x, nodeclass=self.nodeclass)
                 self.left.parent = self
                 self.left.update_balance()
-                return self.left.get_root()
+                return self.get_root()
             else:
                 return self.left.insert(x)
         elif r == 1:
@@ -116,7 +116,7 @@ class AVLTree:
                 self.right = AVLTree(x, nodeclass=self.nodeclass)
                 self.right.parent = self
                 self.right.update_balance()
-                return self.right.get_root()
+                return self.get_root()
             else:
                 return self.right.insert(x)
 
@@ -151,7 +151,7 @@ class AVLTree:
 
     def update_balance(self):
         # if not self.is_balanced():
-        if self.balance > 1 or self.balance < -1:
+        if(not self.is_balanced()):
             self.rebalance()
             return
 

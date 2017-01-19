@@ -140,15 +140,15 @@ class SecMongo:
     def insert(self, doc):
         return self.collection.insert(doc)
 
-    def insert_tree(self, node, data_indexes):
+    def insert_tree(self, node):
         if node is None:
             return None
         # Down the tree from its root, build a index-document and add to the
         # database.
         new_doc = {"index": node.me._id,  # pointer to data
                    "ctR": node.me.value[1],  # value used for selection
-                   "left": self.insert_tree(node.left, data_indexes),
-                   "right": self.insert_tree(node.right, data_indexes)}
+                   "left": self.insert_tree(node.left),
+                   "right": self.insert_tree(node.right)}
         if new_doc["left"]:
             new_doc["left"] = new_doc["left"].inserted_id
         if new_doc["right"]:
