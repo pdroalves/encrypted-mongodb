@@ -23,7 +23,6 @@
 # import sys
 # sys.setrecursionlimit(100000)
 from index.binarytree import BinaryTree
-from index.simplenode import SimpleNode
 from index.encryptednode import EncryptedNode
 from random import randint,shuffle
 from crypto.ore import ORESMALL as ORE

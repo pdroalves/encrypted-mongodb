@@ -2,16 +2,16 @@
 import json
 from client import Client
 from secmongo import SecMongo
+from secmongo.index.indexnode import IndexNode
+from secmongo.index.avltree import AVLTree
 from pymongo import MongoClient
 from time import time
-from index.indexnode import IndexNode
-from index.avltree import AVLTree
 import timeit
 import generate_dataset as genDataset
 
 import pytest
 
-url = "192.168.1.201"
+url = "mongodb://localhost:27017"
 
 # ######################################
 # AUX
@@ -78,7 +78,7 @@ def test_encrypted(benchmark):
 
 	nMax = max(set([x["age"] for x in dataset]))
 	n = nMax+1
-	print "Maximum integer supported by the ORE cryptosystem: %d" % n
+	print("Maximum integer supported by the ORE cryptosystem: %d" % n)
 	client = Client(Client.keygen(),n=n)
 
 	client.set_attr("email","static")
@@ -93,7 +93,7 @@ def test_encrypted(benchmark):
 	s.set_collection("encrypted")
 	s.drop_collection()
 
-	print "%d items were loaded" % len(dataset)
+	print("%d items were loaded" % len(dataset))
 
 	#
 	client.encrypt(dataset[0])

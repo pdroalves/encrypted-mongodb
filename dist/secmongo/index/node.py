@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#coding:utf-8
+# coding:utf-8
 ##########################################################################
 ##########################################################################
 #
@@ -21,9 +21,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##########################################################################
 ##########################################################################
+
+
 class Node(object):
     value = None
-    def __init__(self,value):
+
+    def __init__(self, value):
         self.value = value
-    def compare(self,x):
+
+    def compare(self, x):
         pass

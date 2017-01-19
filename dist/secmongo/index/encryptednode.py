@@ -28,12 +28,15 @@ from secmongo.crypto.ore import ORESMALL as ORE
 class EncryptedNode(Node):
     value = None
     _id = None
-    def __init__(self,value,_id=None):
-        # super(SimpleNode,self).__init__(x)
+
+    def __init__(self, value, _id=None):
         self.value = value
         self._id = _id
-        
-    def compare(self,x):
-        # Compares x with self
-        # if super(SimpleNode,self).value == x:
-        return ORE.compare(x, self.value)
+
+    def compare(self, other, ore=None):
+        if type(other) in (list, tuple):
+            x = other[0]
+        else:
+            x = other
+        # Compares other with self
+        return ORE.compare(ore.encrypt(x)[0], self.value[1])
