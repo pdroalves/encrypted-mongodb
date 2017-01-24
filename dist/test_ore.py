@@ -88,20 +88,18 @@ client.set_attr("age", "index")
 # Setup the MongoDB driver
 s = SecMongo(add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"], 2),
              url='mongodb://localhost:27017')
-s.open_database("test_ore")
+s.open_database("test_sec")
 s.set_collection("gameofthrones2")
 s.drop_collection()
 
 root = None
 
 for i, doc in enumerate(docs):
-    if root:
-        root = root.insert([client.ciphers["index"].encrypt(doc["age"]), [i]])
-    else:
-        root = AVLTree([client.ciphers["index"].encrypt(doc["age"]), [i]],
-                       nodeclass=EncryptedNode)
-    doc['index'] = i
+    node = EncryptedNode(client.ciphers["index"].encrypt(doc["age"]), i)
     enc_doc = client.encrypt(doc)
+    enc_doc['index'] = i
+
+    s.insert_index(node)
     s.insert(enc_doc)
 
 result = [client.decrypt(x)["name"] for x in s.find()]

@@ -96,9 +96,7 @@ class Client:
     # kind: defines the purpose for which the document should be encrypted
     # parent: the parent key
     def encrypt(self, pt, kind="store", parent=None):
-        global oreEncoder
         assert type(pt) == dict
-
         ciphers = self.ciphers
         result = {}
         # finds the lef

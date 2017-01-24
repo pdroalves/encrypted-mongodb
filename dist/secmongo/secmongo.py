@@ -29,7 +29,6 @@ from .crypto.ore import ORESMALL as ORE
 from .index.avltree import AVLTree
 from .index.indexnode import IndexNode
 from bson.json_util import dumps
-from bson.objectid import ObjectId
 import json
 
 
@@ -95,12 +94,12 @@ class SecMongo:
             elif r == 1:
                 # a > b
                 node = self.index_collection.find_one(
-                    {"_id": ObjectId(node["right"])}
+                    {"_id": node["right"]}
                 )
             else:
                 # a < b
                 node = self.index_collection.find_one(
-                    {"_id": ObjectId(node["left"])}
+                    {"_id": node["left"]}
                 )
                 assert r == 2
         return None
@@ -140,6 +139,202 @@ class SecMongo:
     def insert(self, doc):
         return self.collection.insert(doc)
 
+    def print_index(self, node=None, spaces=0):
+        if(not node):
+            node = self.index_collection.find_one({"root": "1"})
+            print("Root Index: ", node['index'])
+        if(node['right']):
+            print(' ' * spaces, 'right', self.print_index(self.index_collection.find_one({"_id": node["right"]}), spaces=spaces+4))
+        if(node['left']):
+            print(' ' * spaces, 'left', self.print_index(self.index_collection.find_one({"_id": node["left"]}), spaces=spaces+4))
+        return node['index']
+
+    def insert_index(self, index):
+        ctL = index.value[0]
+        node = self.index_collection.find_one({"root": "1"})
+        if not node:
+            self.index_collection.insert_one({
+                "index": [index._id],
+                "ctR": index.value[1],
+                "parent": None,
+                "left": None,
+                "right": None,
+                "root": "1"
+            })
+
+        while node is not None:
+            ctR = node["ctR"]
+            r = self.__ciphers["index"].compare(ctL, ctR)
+            if r == 0:
+                # The node already exists in the tree
+                self.index_collection.update(
+                    {"_id": node['_id']},
+                    {"$addToSet": {"index": index._id}}
+                )
+                break
+            elif r == 1:
+                # index is higher than this node.
+                if node["right"] is None:
+                    # This was a leaf.
+                    # Add right index
+                    right = self.index_collection.insert_one({
+                        "index": [index._id],
+                        "ctR": index.value[1],
+                        "parent": node['_id'],
+                        "left": None,
+                        "right": None
+                    })
+                    self.index_collection.update(
+                        {"_id": node['_id']},
+                        {"$set": {"right": right.inserted_id}}
+                    )
+                    break
+                else:
+                    node = self.index_collection.find_one(
+                        {"_id": node["right"]}
+                    )
+            elif r == 2:
+                # index is lower than this node.
+                if node["left"] is None:
+                    # This was a leaf.
+                    # Add left index
+                    left = self.index_collection.insert_one({
+                        "index": [index._id],
+                        "ctR": index.value[1],
+                        "parent": node['_id'],
+                        "left": None,
+                        "right": None
+                    })
+                    self.index_collection.update(
+                        {"_id": node['_id']},
+                        {"$set": {"left": left.inserted_id}}
+                    )
+                    break
+                else:
+                    node = self.index_collection.find_one(
+                        {"_id": node["left"]}
+                    )
+        self.balance_node(self.index_collection.find_one({"root": "1"}))
+
+    def balance_node(self, node):
+        if node:
+            left = self.index_collection.find_one({"_id": node["left"]})
+            left_balance, left_height = self.balance_node(left)
+
+            right = self.index_collection.find_one({"_id": node["right"]})
+            right_balance, right_height = self.balance_node(right)
+
+            self_balance = (right_height - left_height)
+            if self_balance not in [-1, 0, 1]:
+                if self_balance > 0:
+                    if right_balance < 0:
+                        self.right_rotate(right)
+                        self.left_rotate(node)
+                    else:
+                        self.left_rotate(node)
+                elif self_balance < 0:
+                    if left_balance > 0:
+                        self.left_rotate(left)
+                        self.right_rotate(node)
+                    else:
+                        self.right_rotate(node)
+
+            return self_balance, max(left_height, right_height) + 1
+        else:
+            return 0, 0
+
+    def right_rotate(self, node):
+        left = self.index_collection.find_one({"_id": node["left"]})
+        # Set original left child's right child parent to node.
+        if(left['right']):
+            self.index_collection.update(
+                {"_id": left['right']},
+                {"$set": {"parent": node['_id']}}
+            )
+        # Set original parent child to left child of node.
+        if(node["parent"]):
+            parent = self.index_collection.find_one({"_id": node["parent"]})
+            side = 'left' if parent['left'] == node['_id'] else 'right'
+            if side == 'left':
+                self.index_collection.update(
+                    {"_id": parent['_id']},
+                    {"$set": {"left": left['_id']}}
+                )
+            elif side == 'right':
+                self.index_collection.update(
+                    {"_id": parent['_id']},
+                    {"$set": {"right": left['_id']}}
+                )
+        else:
+            # Node has no parent ergo node is root node, ergo left child is now
+            # root.
+            self.index_collection.update(
+                {"_id": node['_id']},
+                {"$unset": {"root": ""}}
+            )
+            self.index_collection.update(
+                {"_id": left['_id']},
+                {"$set": {"root": "1"}}
+            )
+
+        # Set orginal left's parent to node's original parent.
+        self.index_collection.update(
+            {"_id": left['_id']},
+            {"$set": {"parent": node['parent'], "right": node['_id']}}
+        )
+        # Set node's left child to left's original right child update parent of
+        # node to original left child.
+        self.index_collection.update(
+            {"_id": node['_id']},
+            {"$set": {"left": left['right'], "parent": left['_id']}}
+        )
+
+    def left_rotate(self, node):
+        right = self.index_collection.find_one({"_id": node["right"]})
+        # Set original left child's right child parent to node.
+        if(right['left']):
+            self.index_collection.update(
+                {"_id": right['left']},
+                {"$set": {"parent": node['_id']}}
+            )
+        # Set original parent child to right child of node.
+        if(node["parent"]):
+            parent = self.index_collection.find_one({"_id": node["parent"]})
+            side = 'left' if parent['left'] == node['_id'] else 'right'
+            if side == 'left':
+                self.index_collection.update(
+                    {"_id": parent['_id']},
+                    {"$set": {"left": right['_id']}}
+                )
+            elif side == 'right':
+                self.index_collection.update(
+                    {"_id": parent['_id']},
+                    {"$set": {"right": right['_id']}}
+                )
+        else:
+            # Node has no parent ergo node is root node, ergo right child is
+            # now root.
+            self.index_collection.update(
+                {"_id": node['_id']},
+                {"$unset": {"root": ""}}
+            )
+            self.index_collection.update(
+                {"_id": right['_id']},
+                {"$set": {"root": "1"}}
+            )
+
+        # Set orginal right's parent to node's original parent.
+        self.index_collection.update(
+            {"_id": right['_id']},
+            {"$set": {"parent": node['parent'], "left": node['_id']}}
+        )
+        # Set node's right child to right's original right child update parent
+        # of node to original right child.
+        self.index_collection.update(
+            {"_id": node['_id']},
+            {"$set": {"right": right['left'], "parent": right['_id']}}
+        )
+
     def insert_tree(self, node):
         if node is None:
             return None
@@ -171,7 +366,7 @@ class SecMongo:
             data_indexes.append(self.insert(item))
 
         # Add indexes
-        root = self.insert_tree(roottree, data_indexes)
+        root = self.insert_tree(roottree)
         # Add a tag to the root node
         self.index_collection.update({"_id": root.inserted_id},
                                      {"$set": {"root": "1"}})
