@@ -22,7 +22,7 @@
 ##########################################################################
 ##########################################################################
 from node import Node
-from secmongo.crypto.ore import ORESMALL as ORE
+from secmongo.crypto.ore import ORE
 
 
 class EncryptedNode(Node):

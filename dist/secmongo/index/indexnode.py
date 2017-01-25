@@ -38,9 +38,9 @@ class IndexNode(Node):
         else:
             x = other
         # Compares x with self
-        if self.value == x:
+        if x == self.value:
             return 0
-        elif self.value < x:
+        elif x < self.value:
+            return -1
+        elif x > self.value:
             return 1
-        elif self.value > x:
-            return 2

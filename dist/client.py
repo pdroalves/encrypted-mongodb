@@ -28,7 +28,7 @@ from secmongo.crypto import cipher as dummy_cipher
 from secmongo.crypto import aes
 from secmongo.crypto import paillier
 from secmongo.crypto import elgamal
-from secmongo.crypto.ore import ORESMALL as ore
+from secmongo.crypto.ore import ORE
 from datetime import timedelta
 from datetime import date
 import struct
@@ -50,7 +50,7 @@ class Client:
     __mapped_attr = {}
     ciphers = {}
 
-    def __init__(self, keys, n=100):
+    def __init__(self, keys, n=32, k=8):
 
         # Initializes all ciphers
         AES = aes.AES()
@@ -68,13 +68,13 @@ class Client:
         ElGamal.add_to_public_key("beta", keys["ElGamal"]["pub"]["beta"])
         ElGamal.add_to_private_key("d", keys["ElGamal"]["priv"]["d"])
 
-        ORE = ore()
-        ORE.keygen(keys["ORE"], n)
+        ore = ORE()
+        ore.keygen()
 
         Dummy = dummy_cipher.Cipher()
 
         self.ciphers = {"static": AES,
-                        "index": ORE,
+                        "index": ore,
                         "h_add": Paillier,
                         "h_mul": ElGamal,
                         "do_nothing": Dummy}
@@ -96,6 +96,7 @@ class Client:
     # kind: defines the purpose for which the document should be encrypted
     # parent: the parent key
     def encrypt(self, pt, kind="store", parent=None):
+        global oreEncoder
         assert type(pt) == dict
         ciphers = self.ciphers
         result = {}
@@ -149,7 +150,6 @@ class Client:
 
     # Decrypts the return of a query
     def decrypt(self, ct):
-        global decode
         assert type(ct) == dict
 
         ciphers = self.ciphers

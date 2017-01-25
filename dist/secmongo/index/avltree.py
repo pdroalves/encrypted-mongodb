@@ -31,7 +31,6 @@
 #
 from .encryptednode import EncryptedNode
 from .indexnode import IndexNode
-from secmongo.crypto.ore import ORESMALL as ORE
 
 
 class AVLTree:
@@ -76,14 +75,14 @@ class AVLTree:
         elif r == 0:
             # This is the element we look for
             return self
-        elif r == 2 and self.left is not None:
-            # This element is bigger than x
-            # x < self
-            return self.left.find(x)
         elif r == 1 and self.right is not None:
             # This element is lower than x
             # x > self
             return self.right.find(x)
+        elif r == -1 and self.left is not None:
+            # This element is bigger than x
+            # x < self
+            return self.left.find(x)
         else:
             return None
 
@@ -95,7 +94,7 @@ class AVLTree:
             # The element already exists in the tree
             self.me._id = [x[1]] + self.me._id
             return self.get_root()
-        elif r == 2:
+        elif r == -1:
             # This element is bigger than x
             # x < self
             if self.left is None:

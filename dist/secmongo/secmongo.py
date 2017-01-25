@@ -25,7 +25,7 @@ import pymongo
 from pymongo import MongoClient
 from .crypto import paillier
 from .crypto import elgamal
-from .crypto.ore import ORESMALL as ORE
+from .crypto.ore import ORE
 from .index.avltree import AVLTree
 from .index.indexnode import IndexNode
 from bson.json_util import dumps
@@ -101,7 +101,7 @@ class SecMongo:
                 node = self.index_collection.find_one(
                     {"_id": node["left"]}
                 )
-                assert r == 2
+                assert r == -1
         return None
 
     # selection: a query in the same format required by find()
@@ -193,7 +193,7 @@ class SecMongo:
                     node = self.index_collection.find_one(
                         {"_id": node["right"]}
                     )
-            elif r == 2:
+            elif r == -1:
                 # index is lower than this node.
                 if node["left"] is None:
                     # This was a leaf.

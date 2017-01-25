@@ -6,6 +6,7 @@ from secmongo import SecMongo
 from bson.json_util import dumps
 from secmongo.index.avltree import AVLTree
 from secmongo.index.encryptednode import EncryptedNode
+from secmongo.crypto.ore import ORE
 
 #
 # Input data
@@ -79,7 +80,7 @@ docs = [
     }
 ]
 # Setup client
-client = Client(Client.keygen(), n=202)
+client = Client(Client.keygen())
 
 client.set_attr("address", "static")
 client.set_attr("name", "static")
@@ -107,6 +108,5 @@ print(result)
 
 print ""
 print "Someone with 17 years old: "
-for doc in s.find(index=client.get_ctL(17),
-                  projection=["name", "age", "level"]):
+for doc in s.find(index=client.get_ctL(35)):
     print client.decrypt(doc)
