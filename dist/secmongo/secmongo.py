@@ -161,6 +161,7 @@ class SecMongo:
                 "right": None,
                 "root": "1"
             })
+            return
 
         while node is not None:
             ctR = node["ctR"]
@@ -171,7 +172,7 @@ class SecMongo:
                     {"_id": node['_id']},
                     {"$addToSet": {"index": index._id}}
                 )
-                break
+                return
             elif r == 1:
                 # index is higher than this node.
                 if node["right"] is None:
@@ -214,7 +215,18 @@ class SecMongo:
                     node = self.index_collection.find_one(
                         {"_id": node["left"]}
                     )
-        self.balance_node(self.index_collection.find_one({"root": "1"}))
+
+        if(node['parent']):
+            parentparent = self.index_collection.find_one({"_id":
+                                                           node['parent']})
+            if(parentparent['parent']):
+                self.balance_node(self.index_collection.find_one(
+                    {"_id": parentparent['parent']})
+                )
+            else:
+                self.balance_node(self.index_collection.find_one(
+                    {"_id": parentparent['_id']})
+                )
 
     def balance_node(self, node):
         if node:
@@ -224,20 +236,42 @@ class SecMongo:
             right = self.index_collection.find_one({"_id": node["right"]})
             right_balance, right_height = self.balance_node(right)
 
+            node = self.index_collection.find_one(
+                {"_id": node["_id"]}
+            )
+            left = self.index_collection.find_one({"_id": node["left"]})
+            right = self.index_collection.find_one({"_id": node["right"]})
+
             self_balance = (right_height - left_height)
             if self_balance not in [-1, 0, 1]:
                 if self_balance > 0:
+                    parent = self.index_collection.find_one(
+                        {"_id": right["_id"]}
+                    )
                     if right_balance < 0:
                         self.right_rotate(right)
-                        self.left_rotate(node)
-                    else:
-                        self.left_rotate(node)
+                        node = self.index_collection.find_one(
+                            {"_id": node["_id"]}
+                        )
+                        parent = self.index_collection.find_one(
+                            {"_id": right["left"]}
+                        )
+                    self.left_rotate(node)
                 elif self_balance < 0:
+                    parent = self.index_collection.find_one(
+                        {"_id": left["_id"]}
+                    )
                     if left_balance > 0:
+                        print("left right case", node['_id'])
                         self.left_rotate(left)
-                        self.right_rotate(node)
-                    else:
-                        self.right_rotate(node)
+                        node = self.index_collection.find_one(
+                            {"_id": node["_id"]}
+                        )
+                        parent = self.index_collection.find_one(
+                            {"_id": left["right"]}
+                        )
+                    self.right_rotate(node)
+                return self.balance_node(parent)
 
             return self_balance, max(left_height, right_height) + 1
         else:
@@ -276,7 +310,6 @@ class SecMongo:
                 {"_id": left['_id']},
                 {"$set": {"root": "1"}}
             )
-
         # Set orginal left's parent to node's original parent.
         self.index_collection.update(
             {"_id": left['_id']},

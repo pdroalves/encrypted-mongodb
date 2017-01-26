@@ -7,6 +7,7 @@ from bson.json_util import dumps
 from secmongo.index.avltree import AVLTree
 from secmongo.index.encryptednode import EncryptedNode
 from secmongo.crypto.ore import ORE
+import re
 
 #
 # Input data
@@ -82,9 +83,8 @@ docs = [
 # Setup client
 client = Client(Client.keygen())
 
-client.set_attr("address", "static")
-client.set_attr("name", "static")
-client.set_attr("age", "index")
+client.set_attr("title", "static")
+client.set_attr("year", "index")
 
 # Setup the MongoDB driver
 s = SecMongo(add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"], 2),
@@ -93,20 +93,28 @@ s.open_database("test_sec")
 s.set_collection("gameofthrones2")
 s.drop_collection()
 
+docs = []
+with open("movies.list") as movies_file:
+    for line in movies_file:
+        movie = re.search("(.*?)\t+(\d{4})", line)
+        if(movie):
+            docs.append({'title': movie.group(1), 'year': int(movie.group(2))})
+
 root = None
 
-for i, doc in enumerate(docs):
-    node = EncryptedNode(client.ciphers["index"].encrypt(doc["age"]), i)
+for i, doc in enumerate(docs[:5000]):
+    print(doc, i)
+    node = EncryptedNode(client.ciphers["index"].encrypt(doc["year"]), i)
     enc_doc = client.encrypt(doc)
     enc_doc['index'] = i
 
     s.insert_index(node)
     s.insert(enc_doc)
 
-result = [client.decrypt(x)["name"] for x in s.find()]
-print(result)
+result = [client.decrypt(x)["title"] for x in s.find()]
 
 print ""
-print "Someone with 17 years old: "
-for doc in s.find(index=client.get_ctL(35)):
-    print client.decrypt(doc)
+print "Movie from 2015:"
+for doc in s.find(index=client.get_ctL(2015)):
+    # print client.decrypt(doc)
+    pass
