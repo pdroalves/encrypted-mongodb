@@ -102,19 +102,17 @@ with open("movies.list") as movies_file:
 
 root = None
 
-for i, doc in enumerate(docs[:5000]):
-    print(doc, i)
-    node = EncryptedNode(client.ciphers["index"].encrypt(doc["year"]), i)
+for doc in docs[:5000]:
     enc_doc = client.encrypt(doc)
-    enc_doc['index'] = i
-
+    inserted_doc = s.insert(enc_doc)
+    node = EncryptedNode(client.ciphers["index"].encrypt(doc["year"]),
+                         inserted_doc)
     s.insert_index(node)
-    s.insert(enc_doc)
 
 result = [client.decrypt(x)["title"] for x in s.find()]
 
-print ""
-print "Movie from 2015:"
+print("")
+print("Movie from 2015:")
 for doc in s.find(index=client.get_ctL(2015)):
-    # print client.decrypt(doc)
-    pass
+    print(client.decrypt(doc))
+    # pass

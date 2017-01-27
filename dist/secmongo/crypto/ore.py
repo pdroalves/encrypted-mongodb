@@ -31,6 +31,7 @@ if __name__ == '__main__':
     ctA = orelf.encrypt(2)
     ctB = orelf.encrypt(1)
     ctC = orelf.encrypt(3)
+    print(len(ctA[1]))
 
     assert ORE.compare(ctA[0], ctA[1]) == 0
     assert ORE.compare(ctA[0], ctB[1]) == 1

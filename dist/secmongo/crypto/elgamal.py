@@ -48,7 +48,7 @@ class ElGamal(Cipher):
             try:
                 p = Prime.generate_large_prime(key_size)
             except Exception,err:
-                print err
+                print(err)
 
 
         alpha = random.randrange(1,p) # if |G| is prime, then all elements a not 1 \in G are primitives

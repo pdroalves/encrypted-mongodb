@@ -43,9 +43,9 @@ class Paillier(Cipher):
                 try:
                     while p == q:
                         p = Prime.generate_large_prime(key_size / 2)
-                        q = Prime.generate_large_prime(key_size / 2) # i want p != q
-                except Exception,err:
-                    print err
+                        q = Prime.generate_large_prime(key_size / 2)  # i want p != q
+                except Exception, err:
+                    print(err)
                     p = None
                     q = None
 

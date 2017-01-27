@@ -90,7 +90,7 @@ class SecMongo:
             if r == 0:
                 # Found
                 # a == b
-                return self.collection.find({"index": {"$in": node["index"]}})
+                return self.collection.find({"_id": {"$in": node["index"]}})
             elif r == 1:
                 # a > b
                 node = self.index_collection.find_one(
@@ -262,7 +262,6 @@ class SecMongo:
                         {"_id": left["_id"]}
                     )
                     if left_balance > 0:
-                        print("left right case", node['_id'])
                         self.left_rotate(left)
                         node = self.index_collection.find_one(
                             {"_id": node["_id"]}

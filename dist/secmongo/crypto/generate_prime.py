@@ -23,7 +23,8 @@ import random
 import math
 import sys
 
-def miller_rabin(p,s=11):
+
+def miller_rabin(p, s=11):
     # using security parameter s=11, we have a error probability of less than
     # 2**-80
 

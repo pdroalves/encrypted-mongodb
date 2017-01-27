@@ -56,7 +56,7 @@ class AES(Cipher):
     def encrypt(self, raw):
         raw = pad(str(raw))
         iv = Random.new().read(CryptoCipher.AES.block_size)
-        cipher = CryptoCipher.AES.new(self.keys["priv"]["key"],
+        cipher = CryptoCipher.AES.new(self.get_private_key()['key'],
                                       CryptoCipher.AES.MODE_CBC,
                                       iv)
         return base64.b64encode(iv + cipher.encrypt(raw))
@@ -64,7 +64,7 @@ class AES(Cipher):
     def decrypt(self, enc):
         enc = base64.b64decode(enc)
         iv = enc[:16]
-        cipher = CryptoCipher.AES.new(self.keys["priv"]["key"],
+        cipher = CryptoCipher.AES.new(self.get_private_key()['key'],
                                       CryptoCipher.AES.MODE_CBC,
                                       iv)
         return unpad(cipher.decrypt(enc[16:]))
