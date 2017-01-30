@@ -113,7 +113,7 @@ docs = [
 docs.sort(key=lambda x:  x["age"])
 
 # Setup client
-client = Client(Client.keygen(), n=202)
+client = Client(Client.keygen())
 
 client.set_attr("address", "static")
 client.set_attr("name", "static")

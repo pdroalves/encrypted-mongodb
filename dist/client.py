@@ -50,7 +50,7 @@ class Client:
     __mapped_attr = {}
     ciphers = {}
 
-    def __init__(self, keys, n=32, k=8):
+    def __init__(self, keys):
 
         # Initializes all ciphers
         AES = aes.AES()
