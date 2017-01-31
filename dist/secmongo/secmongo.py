@@ -66,14 +66,14 @@ class SecMongo:
         self.db = self.client[database]
 
     # Future work
-    # def load_scripts(self):
-    #     assert self.db
-    #     script_dir = os.path.join(os.path.dirname(__file__), 'scripts')
-    #     scripts = filter(lambda x: x.endswith('.js'), os.listdir(script_dir))
-    #     for script in scripts:
-    #         with open(os.path.join(script_dir, script), 'r') as js_file:
-    #             setattr(self.db.system_js, script.strip('.js'),
-    #                     ''.join(js_file.readlines()))
+    def load_scripts(self):
+        assert self.db
+        script_dir = os.path.join(os.path.dirname(__file__), 'scripts')
+        scripts = filter(lambda x: x.endswith('.js'), os.listdir(script_dir))
+        for script in scripts:
+            with open(os.path.join(script_dir, script), 'r') as js_file:
+                setattr(self.db.system_js, script.strip('.js'),
+                        ''.join(js_file.readlines()))
 
     def set_collection(self, collection):
         assert type(collection) is str
