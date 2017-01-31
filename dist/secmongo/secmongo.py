@@ -30,6 +30,7 @@ from .index.avltree import AVLTree
 from .index.indexnode import IndexNode
 from bson.json_util import dumps
 import json
+import os
 
 
 class StopLookingForThings(Exception):
@@ -63,6 +64,16 @@ class SecMongo:
     def open_database(self, database):
         assert type(database) is str
         self.db = self.client[database]
+
+    # Future work
+    # def load_scripts(self):
+    #     assert self.db
+    #     script_dir = os.path.join(os.path.dirname(__file__), 'scripts')
+    #     scripts = filter(lambda x: x.endswith('.js'), os.listdir(script_dir))
+    #     for script in scripts:
+    #         with open(os.path.join(script_dir, script), 'r') as js_file:
+    #             setattr(self.db.system_js, script.strip('.js'),
+    #                     ''.join(js_file.readlines()))
 
     def set_collection(self, collection):
         assert type(collection) is str
@@ -216,17 +227,7 @@ class SecMongo:
                         {"_id": node["left"]}
                     )
 
-        if(node['parent']):
-            parentparent = self.index_collection.find_one({"_id":
-                                                           node['parent']})
-            if(parentparent['parent']):
-                self.balance_node(self.index_collection.find_one(
-                    {"_id": parentparent['parent']})
-                )
-            else:
-                self.balance_node(self.index_collection.find_one(
-                    {"_id": parentparent['_id']})
-                )
+        self.balance_node(self.index_collection.find_one({"root": "1"}))
 
     def balance_node(self, node):
         if node:
