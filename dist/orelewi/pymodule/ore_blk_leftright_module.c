@@ -63,7 +63,6 @@ PyObject *Py_AES_KEY_To_PyArray(AES_KEY key){
     PyTuple_SetItem(aesblock, 1, PyLong_FromUnsignedLongLong(key.rd_key[i][1]));
     PyTuple_SetItem(aeskey, i, aesblock);
   }
-  
   return aeskey;
 }
 
@@ -96,7 +95,6 @@ PyObject *Py_byte_array_To_PyArray(byte* b, int length){
   for(int i = 0; i < length; i++)
     PyTuple_SetItem(pylist, i, PyInt_FromLong((long)b[i]));
   
-  
   return pylist;
 }
 
@@ -120,8 +118,9 @@ void Py_AESKEY_to_block_array(block* b, PyObject *obj, int length){
 
     b[i][0] = (uint64_t) PyLong_AsUnsignedLongLong(PyTuple_GetItem(next,0));
     b[i][1] = (uint64_t) PyLong_AsUnsignedLongLong(PyTuple_GetItem(next,1));
+    Py_DECREF(next);
   }
-  
+  Py_DECREF(iter);
   return;
 }
 
@@ -146,7 +145,6 @@ py_ore_blk_encrypt(PyObject *self, PyObject *args){
   sk->params->initialized = true;
   sk->params->nbits = params->nbits;
   sk->params->block_len = params->block_len;
-
   // Ciphertext
   ERR_CHECK(init_ore_blk_ciphertext(ctx, params));
 
@@ -157,10 +155,11 @@ py_ore_blk_encrypt(PyObject *self, PyObject *args){
 
   ERR_CHECK(clear_ore_blk_ciphertext(ctx));
 
-  return Py_BuildValue("OO",
-                       ctxleft,
-                       ctxright
-                      );
+  PyObject *return_value = Py_BuildValue("OO", ctxleft, ctxright);
+
+  Py_DECREF(ctxleft);
+  Py_DECREF(ctxright);
+  return return_value;
 }
 
 /* Converts a block/__m128i object to a array of uint64_t
@@ -185,7 +184,9 @@ void Py_To_PyArray_bytearray(byte *b, PyObject* obj){
     }
 
     b[i] = (uint8_t)PyInt_AsLong(next);
+    Py_DECREF(next);
   }
+  Py_DECREF(iter);
   return;
 }
 
@@ -197,13 +198,12 @@ py_ore_blk_compare(PyObject *self, PyObject *args){
   PyObject *ctx2right;
   ore_blk_params params;
   params->initialized = true;
-
   if (!PyArg_ParseTuple(args, "IIOO", &params->nbits,
                                       &params->block_len,
                                       &ctx1left,
                                       &ctx2right))
     return NULL;
-  
+    
   ERR_CHECK(init_ore_blk_ciphertext(ctx1, params));
   ERR_CHECK(init_ore_blk_ciphertext(ctx2, params));
   
@@ -214,7 +214,7 @@ py_ore_blk_compare(PyObject *self, PyObject *args){
   ctx1->params->nbits = params->nbits;
   ctx1->params->block_len = params->block_len;
 
-  // Ciphertext2
+  // // Ciphertext2
   ctx2->initialized = true;
   Py_To_PyArray_bytearray(ctx2->comp_right, ctx2right);
   ctx2->params->initialized = true;
@@ -228,7 +228,6 @@ py_ore_blk_compare(PyObject *self, PyObject *args){
   ERR_CHECK(clear_ore_blk_ciphertext(ctx2));
 
   return Py_BuildValue("i", res);
-
 }
 
 //////////////////
