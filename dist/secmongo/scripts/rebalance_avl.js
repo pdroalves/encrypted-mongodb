@@ -13,10 +13,9 @@ function(name, node_id){
                              collection.findOne({_id: left['right']})) > 0){
                 left_rotate(collection, left);
                 node = collection.findOne({"_id": node["_id"]});
-                type += "left"
             }
             right_rotate(collection, node);
-            return type + "right"
+            return;
         } else if(balance > 1){
             if(check_balance(collection.findOne({_id: right['left']}),
                              collection.findOne({_id: right['right']})) < 0){
@@ -25,7 +24,7 @@ function(name, node_id){
                 type += "right"
             }
             left_rotate(collection, node);
-            return type + "left"
+            return;
         }
         node = collection.findOne({_id: node['parent']});
     }

@@ -232,8 +232,8 @@ class SecMongo:
                     )
         self.db.system_js.update_height(self.index_collection.name,
                                         new.inserted_id)
-        print(self.db.system_js.rebalance_avl(self.index_collection.name,
-                                        new.inserted_id))
+        self.db.system_js.rebalance_avl(self.index_collection.name,
+                                        new.inserted_id)
 
         # self.balance_node(self.index_collection.find_one({"parent": None}))
 

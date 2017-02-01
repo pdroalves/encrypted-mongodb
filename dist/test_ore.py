@@ -8,6 +8,8 @@ from secmongo.index.avltree import AVLTree
 from secmongo.index.encryptednode import EncryptedNode
 import linecache
 import json
+import re
+import time
 
 
 def main():
