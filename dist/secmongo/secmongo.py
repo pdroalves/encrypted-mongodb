@@ -65,7 +65,9 @@ class SecMongo:
         assert type(database) is str
         self.db = self.client[database]
 
-    # Future work
+    def derp(self):
+        self.db.system_js.rebalance_avl(self.index_collection.name, 1)
+
     def load_scripts(self):
         assert self.db
         script_dir = os.path.join(os.path.dirname(__file__), 'scripts')
@@ -94,7 +96,7 @@ class SecMongo:
         #  The query MUST be encrypted
 
         # Get the tree root
-        node = self.index_collection.find_one({"root": "1"})
+        node = self.index_collection.find_one({"parent": None})
         while node is not None:
             ctR = node["ctR"]  # b
             r = self.__ciphers["index"].compare(ctL, ctR)
@@ -162,7 +164,7 @@ class SecMongo:
 
     def insert_index(self, index):
         ctL = index.value[0]
-        node = self.index_collection.find_one({"root": "1"})
+        node = self.index_collection.find_one({"parent": None})
         if not node:
             self.index_collection.insert_one({
                 "index": [index._id],
@@ -170,7 +172,7 @@ class SecMongo:
                 "parent": None,
                 "left": None,
                 "right": None,
-                "root": "1"
+                "height": 1
             })
             return
 
@@ -189,16 +191,17 @@ class SecMongo:
                 if node["right"] is None:
                     # This was a leaf.
                     # Add right index
-                    right = self.index_collection.insert_one({
+                    new = self.index_collection.insert_one({
                         "index": [index._id],
                         "ctR": index.value[1],
                         "parent": node['_id'],
                         "left": None,
-                        "right": None
+                        "right": None,
+                        "height": 1
                     })
                     self.index_collection.update(
                         {"_id": node['_id']},
-                        {"$set": {"right": right.inserted_id}}
+                        {"$set": {"right": new.inserted_id}}
                     )
                     break
                 else:
@@ -210,24 +213,29 @@ class SecMongo:
                 if node["left"] is None:
                     # This was a leaf.
                     # Add left index
-                    left = self.index_collection.insert_one({
+                    new = self.index_collection.insert_one({
                         "index": [index._id],
                         "ctR": index.value[1],
                         "parent": node['_id'],
                         "left": None,
-                        "right": None
+                        "right": None,
+                        "height": 1
                     })
                     self.index_collection.update(
                         {"_id": node['_id']},
-                        {"$set": {"left": left.inserted_id}}
+                        {"$set": {"left": new.inserted_id}}
                     )
                     break
                 else:
                     node = self.index_collection.find_one(
                         {"_id": node["left"]}
                     )
+        self.db.system_js.update_height(self.index_collection.name,
+                                        new.inserted_id)
+        # print(self.db.system_js.rebalance_avl(self.index_collection.name,
+        #                                 new.inserted_id))
 
-        self.balance_node(self.index_collection.find_one({"root": "1"}))
+        self.balance_node(self.index_collection.find_one({"parent": None}))
 
     def balance_node(self, node):
         if node:
@@ -245,6 +253,7 @@ class SecMongo:
 
             self_balance = (right_height - left_height)
             if self_balance not in [-1, 0, 1]:
+                print("unbalance")
                 if self_balance > 0:
                     parent = self.index_collection.find_one(
                         {"_id": right["_id"]}
@@ -299,17 +308,6 @@ class SecMongo:
                     {"_id": parent['_id']},
                     {"$set": {"right": left['_id']}}
                 )
-        else:
-            # Node has no parent ergo node is root node, ergo left child is now
-            # root.
-            self.index_collection.update(
-                {"_id": node['_id']},
-                {"$unset": {"root": ""}}
-            )
-            self.index_collection.update(
-                {"_id": left['_id']},
-                {"$set": {"root": "1"}}
-            )
         # Set orginal left's parent to node's original parent.
         self.index_collection.update(
             {"_id": left['_id']},
@@ -344,17 +342,6 @@ class SecMongo:
                     {"_id": parent['_id']},
                     {"$set": {"right": right['_id']}}
                 )
-        else:
-            # Node has no parent ergo node is root node, ergo right child is
-            # now root.
-            self.index_collection.update(
-                {"_id": node['_id']},
-                {"$unset": {"root": ""}}
-            )
-            self.index_collection.update(
-                {"_id": right['_id']},
-                {"$set": {"root": "1"}}
-            )
 
         # Set orginal right's parent to node's original parent.
         self.index_collection.update(
