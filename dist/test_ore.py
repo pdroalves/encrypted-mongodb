@@ -8,6 +8,8 @@ from secmongo.index.avltree import AVLTree
 from secmongo.index.encryptednode import EncryptedNode
 from secmongo.crypto.ore import ORE
 import re
+import linecache
+import json
 
 #
 # Input data
@@ -92,13 +94,16 @@ s = SecMongo(add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"], 2),
 s.open_database("test_sec")
 s.set_collection("gameofthrones2")
 s.drop_collection()
+s.load_scripts()
 
 docs = []
-with open("movies.list") as movies_file:
-    for line in movies_file:
-        movie = re.search("(.*?)\t+(\d{4})", line)
-        if(movie):
-            docs.append({'title': movie.group(1), 'year': int(movie.group(2))})
+for i in range(5000):
+    data = json.loads(linecache.getline('movies.json', i+1))
+    year = 0
+    if data['year'] and data['year'][0]:
+        year = int(data['year'][0])
+
+    docs.append({'title': data['title'].encode('ascii','ignore'), 'year': year})
 
 root = None
 
