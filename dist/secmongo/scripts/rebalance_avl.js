@@ -3,8 +3,8 @@ function(name, node_id){
     var collection = db.getCollection(name);
     new_node = collection.findOne({_id: node_id});
     node = collection.findOne({_id: new_node['parent']});
-
-    while(node !== null){
+    var type = "";
+    while(node != null){
         left = collection.findOne({_id: node['left']});
         right = collection.findOne({_id: node['right']});
         balance = check_balance(left, right);
@@ -13,17 +13,19 @@ function(name, node_id){
                              collection.findOne({_id: left['right']})) > 0){
                 left_rotate(collection, left);
                 node = collection.findOne({"_id": node["_id"]});
+                type += "left"
             }
             right_rotate(collection, node);
-            return "Balance fixed"
+            return type + "right"
         } else if(balance > 1){
             if(check_balance(collection.findOne({_id: right['left']}),
                              collection.findOne({_id: right['right']})) < 0){
                 right_rotate(collection, right);
                 node = collection.findOne({"_id": node["_id"]});
+                type += "right"
             }
             left_rotate(collection, node);
-            return "Balance fixed"
+            return type + "left"
         }
         node = collection.findOne({_id: node['parent']});
     }

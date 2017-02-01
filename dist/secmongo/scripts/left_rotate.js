@@ -2,7 +2,7 @@ function(collection, node){
     var right, parent;
     right = collection.findOne({_id: node["right"]});
     // Set original left child's right child parent to node.
-    if(right['left'] !== null) {
+    if(right['left'] != null) {
         collection.updateOne(
             {_id: right['left']},
             {$set: {parent: node['_id']}}
@@ -10,9 +10,13 @@ function(collection, node){
     }
 
     // Set original parent child to right child of node.
-    if(node["parent"] !== null) {
+    if(node["parent"] != null) {
         parent = collection.findOne({_id: node["parent"]});
-        side = ((parent['left'] == node['_id']) ? 'left' : 'right');
+        if(parent['left'] != null){
+            side = ((node['_id'].equals(parent['left'])) ? 'left' : 'right');
+        }else{
+            side = 'right'
+        }
         if(side == 'left') {
             collection.updateOne(
                 {_id: parent['_id']},

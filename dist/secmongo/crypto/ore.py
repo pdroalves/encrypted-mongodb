@@ -1,5 +1,5 @@
 import LewiWuOREBlkLF as ore
-
+import random
 
 class ORE():
     n = None  # Bit length of plaintext space
@@ -28,10 +28,11 @@ class ORE():
 if __name__ == '__main__':
     orelf = ORE()
     sk = orelf.keygen()
-    ctA = orelf.encrypt(2)
     ctB = orelf.encrypt(1)
+    while True:
+        rand = random.randint(0, 2**8)
+        ctA = orelf.encrypt(rand)
     ctC = orelf.encrypt(3)
-    print(len(ctA[1]))
 
     assert ORE.compare(ctA[0], ctA[1]) == 0
     assert ORE.compare(ctA[0], ctB[1]) == 1
