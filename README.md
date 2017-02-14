@@ -15,13 +15,15 @@ This is a proof-of-concept implementation of the framework proposed by [Alves 20
 ## Citing
 Please cite using the template below:
 
-	@INPROCEEDINGS{Alves2016,
- 		author = {{Alves, Pedro}},
-  		title = {{A framework for searching encrypted databases}},
-  		year = 2016,
-  		BOOKTITLE= {{Anais do XVI Simpósio Brasileiro em Segurança da Informação e de Sistemas Computacionais (SBSeg 2016)}},
+	@inproceedings{Alves2016,
+	  author = "P. G. M. R. Alves and D. F. Aranha",
+	  title = "A framework for searching encrypted databases",
+	  year = 2016,
+	  journal = "Brazilian Symposium on Information and Computational Systems Security",
+	  booktitle = "Proceedings of the XVI Brazilian Symposium on Information and Computational Systems Security",
+	  month = "Nov",
+	  keywords = "databases, homomorphic encryption, order-revealing encryption, ore, order-preserving encryption, ope"
 	}
-
 
 ## Licensing
 
