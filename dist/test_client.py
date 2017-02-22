@@ -86,8 +86,9 @@ def main():
     ]
     # Setup client
     client = Client(Client.keygen())
-    client.set_attr("title", "static")
-    client.set_attr("year", "index")
+    client.set_attr("name", "static")
+    client.set_attr("address", "static")
+    client.set_attr("age", "index")
 
     # Setup the MongoDB driver
     s = SecMongo(add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"],
@@ -104,12 +105,12 @@ def main():
     for i, doc in enumerate(docs):
         enc_doc = client.encrypt(doc)
         inserted_doc = s.insert(enc_doc)
-        node = EncryptedNode(client.ciphers["index"].encrypt(doc["year"]),
+        node = EncryptedNode(client.ciphers["index"].encrypt(doc["age"]),
                              inserted_doc)
         s.insert_index(node)
 
     print("Insert time: ", time.time() - start)
-    result = [client.decrypt(x)["title"] for x in s.find()]
+    result = [client.decrypt(x)["name"] for x in s.find()]
     print("")
 
     print("People of 35 years old:")
