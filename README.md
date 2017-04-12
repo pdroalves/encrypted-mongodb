@@ -10,7 +10,7 @@ Advisor: [Diego F. Aranha](http://www.ic.unicamp.br/~dfaranha). <br/>
 
 ## About
 
-This is a proof-of-concept implementation of the framework proposed by [Alves 2016] with the purpose of offering a wrapper on MongoDB's Python driver that enables a application to store and query encrypted data on the database.
+This is a proof-of-concept implementation of the framework proposed by [Alves and Aranha 2016] with the purpose of offering a wrapper on MongoDB's Python driver that enables a application to store and query encrypted data on the database.
 
 ## Citing
 Please cite using the template below:
