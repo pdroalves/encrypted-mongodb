@@ -82,7 +82,7 @@ class SecMongo:
         self.collection = self.db[collection]
         self.index_collection = self.db["indexes-"+collection]
 
-    def find(self, index=None, projection=None):
+    def find(self, index=None, relationship = 0, projection=None, iname=None):
         if index is None:
             return self.collection.find()
 
@@ -96,25 +96,67 @@ class SecMongo:
         #  The query MUST be encrypted
 
         # Get the tree root
-        node = self.index_collection.find_one({"parent": None})
+        node = self.index_collection.find_one({"parent": None, "iname":iname})
         while node is not None:
             ctR = node["ctR"]  # b
             r = self.__ciphers["index"].compare(ctL, ctR)
-            if r == 0:
-                # Found
-                # a == b
-                return self.collection.find({"_id": {"$in": node["index"]}})
-            elif r == 1:
-                # a > b
-                node = self.index_collection.find_one(
-                    {"_id": node["right"]}
-                )
-            else:
-                # a < b
-                node = self.index_collection.find_one(
-                    {"_id": node["left"]}
-                )
-                assert r == -1
+
+            if relationship == 0: # Equality
+                if r == 0:
+                    # Found
+                    # a == b
+                    return self.collection.find({"_id": {"$in": node["index"]}})
+                elif r == 1:
+                    # a > b
+                    node = self.index_collection.find_one(
+                        {"_id": node["right"]}
+                    )
+                else:
+                    # a < b
+                    node = self.index_collection.find_one(
+                        {"_id": node["left"]}
+                    )
+                    assert r == -1
+            elif relationship == 1: # > than
+                if r == 0:
+                    # Found
+                    # a == b
+                    return self.__get_branch(self.index_collection.find_one(
+                                                {"_id": node["right"]}
+                                            ))
+                elif r == 1:
+                    # a < b
+                    node = self.index_collection.find_one(
+                        {"_id": node["right"]}
+                    )
+                else:
+                    assert r == -1
+                    # Found
+                    # a > b
+                    return self.__get_branch(self.index_collection.find_one(
+                                                {"_id": node["right"]}
+                                            ))
+            else: # < than
+                assert relationship == -1
+                if r == 0:
+                    # Found
+                    # a == b
+                    return self.__get_branch(self.index_collection.find_one(
+                                                {"_id": node["left"]}
+                                            ))
+                elif r == 1:
+                    # a > b
+                    # Found
+                    return self.__get_branch(self.index_collection.find_one(
+                        {"_id": node["left"]}
+                    ))
+                else:
+                    assert r == -1
+                    # a < b
+                    node = self.index_collection.find_one(
+                        {"_id": node["left"]}
+                    )
+
         return None
 
     # selection: a query in the same format required by find()
@@ -162,9 +204,12 @@ class SecMongo:
             print(' ' * spaces, 'left', self.print_index(self.index_collection.find_one({"_id": node["left"]}), spaces=spaces+4))
         return node['index']
 
-    def insert_index(self, index):
+    #
+    # iname: Index collection name
+    #
+    def insert_index(self, index, iname = None):
         ctL = index.value[0]
-        node = self.index_collection.find_one({"parent": None})
+        node = self.index_collection.find_one({"parent": None, "iname": iname})
         if not node:
             self.index_collection.insert_one({
                 "index": [index._id],
@@ -172,6 +217,7 @@ class SecMongo:
                 "parent": None,
                 "left": None,
                 "right": None,
+                "iname": iname, 
                 "height": 1
             })
             return
@@ -197,6 +243,7 @@ class SecMongo:
                         "parent": node['_id'],
                         "left": None,
                         "right": None,
+                        "iname": iname, 
                         "height": 1
                     })
                     self.index_collection.update(
@@ -206,7 +253,7 @@ class SecMongo:
                     break
                 else:
                     node = self.index_collection.find_one(
-                        {"_id": node["right"]}
+                        {"_id": node["right"], "iname": iname}
                     )
             elif r == -1:
                 # index is lower than this node.
@@ -219,6 +266,7 @@ class SecMongo:
                         "parent": node['_id'],
                         "left": None,
                         "right": None,
+                        "iname": iname, 
                         "height": 1
                     })
                     self.index_collection.update(
@@ -228,12 +276,14 @@ class SecMongo:
                     break
                 else:
                     node = self.index_collection.find_one(
-                        {"_id": node["left"]}
+                        {"_id": node["left"], "iname": iname}
                     )
         self.db.system_js.update_height(self.index_collection.name,
-                                        new.inserted_id)
+                                        new.inserted_id,
+                                        iname)
         self.db.system_js.rebalance_avl(self.index_collection.name,
-                                        new.inserted_id)
+                                        new.inserted_id,
+                                        iname)
 
         # self.balance_node(self.index_collection.find_one({"parent": None}))
 
@@ -450,3 +500,12 @@ class SecMongo:
             if pt in ([1], (1,)):
                 return True
         return False
+
+    # Returns all entries indexed from that node
+    def __get_branch(self, node):
+        entries = []
+        if node is not None:
+            entries.extend(self.collection.find({"_id": {"$in": node["index"]}}))
+            entries.extend(self.__get_branch(self.index_collection.find_one({"_id": node["right"]})))
+            entries.extend(self.__get_branch(self.index_collection.find_one({"_id": node["left"]})))
+        return entries
