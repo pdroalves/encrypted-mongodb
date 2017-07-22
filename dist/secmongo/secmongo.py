@@ -31,30 +31,104 @@ from .index.indexnode import IndexNode
 from bson.json_util import dumps
 import json
 import os
-
+import gc
 
 class StopLookingForThings(Exception):
     pass
 
+
+class MemDB:
+
+    def __init__(self, collection):
+        print "Running on memory"
+        self.name = collection
+        self.data = list()
+
+    def insert(self, element):
+        node = {"_id":len(self.data), "value": element}
+        self.data.append(node)
+        return node["_id"]
+
+    def find(self, predicate):
+        if predicate is None:
+            return self.data
+        else:
+            assert "_id" in predicate.keys()
+            assert "$in" in predicate["_id"].keys()
+            result = filter(lambda x: 
+                x["_id"] in predicate["_id"]["$in"],
+                self.data)
+            return result if len(result) > 0 else None
+
+    def update(self, target, predicate):
+        for command in predicate.keys():
+            if command == "$set":
+                branch, index = predicate[command].items()[0]
+                self.data[target["_id"]][branch] = index
+                return self.data[target["_id"]]
+            elif command ==  "$addToSet":
+                s, index = predicate[command].items()[0]
+                self.data[target["_id"]][s].append(index)
+                return self.data[target["_id"]]
+            else:
+                print "Unknown predicate: %s" % predicate
+
+    def drop(self):
+        del self.data
+        self.data = list()
+        gc.collect()        
+
+class MemDBIndex:
+
+    def __init__(self, db):
+        self.collection_name = db.name
+        assert type(self.collection_name) == str
+        self.name = "indexes-"+self.collection_name
+        self.data = list()
+
+    def find_one(self, target):
+        if len(self.data) == 0:
+            return None
+
+        result = filter(lambda x: 
+            set([x[attr] == target[attr] for attr in target.keys()]) == set([True]),
+            self.data)
+        return result[0] if len(result) > 0 else None
+
+    def insert_one(self, element):
+        # print element
+        node = dict(element)
+        node["_id"] = len(self.data)
+        self.data.append(node)
+        return self.data[-1]
+
+    def update(self, target, predicate):
+        for command in predicate.keys():
+            if command == "$set":
+                branch, index = predicate[command].items()[0]
+                self.data[target["_id"]][branch] = index
+                return self.data[target["_id"]]
+            elif command ==  "$addToSet":
+                s, index = predicate[command].items()[0]
+                self.data[target["_id"]][s].append(index)
+                return self.data[target["_id"]]
+            else:
+                print "Unknown predicate: %s" % predicate
+
+    def drop(self):
+        del self.data
+        self.data = list()
 
 class SecMongo:
     ASCENDING = pymongo.ASCENDING
     DESCENDING = pymongo.DESCENDING
 
     client = None
-    db = None
     collection = None
 
     __ciphers = {"index": None, "h_add": None, "h_mul": None}
 
-    def __init__(self, add_cipher_param=None, url=None):
-        assert url is None or type(url) == str
-
-        # Connects to database
-        if url:
-            self.client = MongoClient(url)
-        else:
-            self.client = MongoClient()
+    def __init__(self, add_cipher_param=None, url = None):
 
         self.__ciphers["index"] = ORE
         self.__ciphers["h_add"] = paillier.Paillier()
@@ -62,25 +136,12 @@ class SecMongo:
         self.__ciphers["h_mul"] = elgamal.ElGamal()
 
     def open_database(self, database):
-        assert type(database) is str
-        self.db = self.client[database]
-
-    def derp(self):
-        self.db.system_js.rebalance_avl(self.index_collection.name, 1)
-
-    def load_scripts(self):
-        assert self.db
-        script_dir = os.path.join(os.path.dirname(__file__), 'scripts')
-        scripts = filter(lambda x: x.endswith('.js'), os.listdir(script_dir))
-        for script in scripts:
-            with open(os.path.join(script_dir, script), 'r') as js_file:
-                setattr(self.db.system_js, script.strip('.js'),
-                        ''.join(js_file.readlines()))
+        pass
 
     def set_collection(self, collection):
         assert type(collection) is str
-        self.collection = self.db[collection]
-        self.index_collection = self.db["indexes-"+collection]
+        self.collection = MemDB(collection)
+        self.index_collection = MemDBIndex(self.collection)
 
     def find(self, index=None, relationship = 0, projection=None, iname=None):
         if index is None:
@@ -100,7 +161,6 @@ class SecMongo:
         while node is not None:
             ctR = node["ctR"]  # b
             r = self.__ciphers["index"].compare(ctL, ctR)
-
             if relationship == 0: # Equality
                 if r == 0:
                     # Found
@@ -228,7 +288,7 @@ class SecMongo:
             if r == 0:
                 # The node already exists in the tree
                 self.index_collection.update(
-                    {"_id": node['_id']},
+                    {"_id": node["_id"]},
                     {"$addToSet": {"index": index._id}}
                 )
                 return
@@ -240,15 +300,15 @@ class SecMongo:
                     new = self.index_collection.insert_one({
                         "index": [index._id],
                         "ctR": index.value[1],
-                        "parent": node['_id'],
+                        "parent": node["_id"],
                         "left": None,
                         "right": None,
                         "iname": iname, 
                         "height": 1
                     })
                     self.index_collection.update(
-                        {"_id": node['_id']},
-                        {"$set": {"right": new.inserted_id}}
+                        {"_id": node["_id"]},
+                        {"$set": {"right": new["_id"]}}
                     )
                     break
                 else:
@@ -263,27 +323,27 @@ class SecMongo:
                     new = self.index_collection.insert_one({
                         "index": [index._id],
                         "ctR": index.value[1],
-                        "parent": node['_id'],
+                        "parent": node["_id"],
                         "left": None,
                         "right": None,
                         "iname": iname, 
                         "height": 1
                     })
                     self.index_collection.update(
-                        {"_id": node['_id']},
-                        {"$set": {"left": new.inserted_id}}
+                        {"_id": node["_id"]},
+                        {"$set": {"left": new["_id"]}}
                     )
                     break
                 else:
                     node = self.index_collection.find_one(
                         {"_id": node["left"], "iname": iname}
                     )
-        self.db.system_js.update_height(self.index_collection.name,
-                                        new.inserted_id,
-                                        iname)
-        self.db.system_js.rebalance_avl(self.index_collection.name,
-                                        new.inserted_id,
-                                        iname)
+        # self.db.system_js.update_height(self.index_collection.name,
+        #                                 new["_id"],
+        #                                 iname)
+        # self.db.system_js.rebalance_avl(self.index_collection.name,
+        #                                 new["_id"],
+        #                                 iname)
 
         # self.balance_node(self.index_collection.find_one({"parent": None}))
 
@@ -342,32 +402,32 @@ class SecMongo:
         if(left['right']):
             self.index_collection.update(
                 {"_id": left['right']},
-                {"$set": {"parent": node['_id']}}
+                {"$set": {"parent": node["_id"]}}
             )
         # Set original parent child to left child of node.
         if(node["parent"]):
             parent = self.index_collection.find_one({"_id": node["parent"]})
-            side = 'left' if parent['left'] == node['_id'] else 'right'
+            side = 'left' if parent['left'] == node["_id"] else 'right'
             if side == 'left':
                 self.index_collection.update(
-                    {"_id": parent['_id']},
-                    {"$set": {"left": left['_id']}}
+                    {"_id": parent["_id"]},
+                    {"$set": {"left": left["_id"]}}
                 )
             elif side == 'right':
                 self.index_collection.update(
-                    {"_id": parent['_id']},
-                    {"$set": {"right": left['_id']}}
+                    {"_id": parent["_id"]},
+                    {"$set": {"right": left["_id"]}}
                 )
         # Set orginal left's parent to node's original parent.
         self.index_collection.update(
-            {"_id": left['_id']},
-            {"$set": {"parent": node['parent'], "right": node['_id']}}
+            {"_id": left["_id"]},
+            {"$set": {"parent": node['parent'], "right": node["_id"]}}
         )
         # Set node's left child to left's original right child update parent of
         # node to original left child.
         self.index_collection.update(
-            {"_id": node['_id']},
-            {"$set": {"left": left['right'], "parent": left['_id']}}
+            {"_id": node["_id"]},
+            {"$set": {"left": left['right'], "parent": left["_id"]}}
         )
 
     def left_rotate(self, node):
@@ -376,33 +436,33 @@ class SecMongo:
         if(right['left']):
             self.index_collection.update(
                 {"_id": right['left']},
-                {"$set": {"parent": node['_id']}}
+                {"$set": {"parent": node["_id"]}}
             )
         # Set original parent child to right child of node.
         if(node["parent"]):
             parent = self.index_collection.find_one({"_id": node["parent"]})
-            side = 'left' if parent['left'] == node['_id'] else 'right'
+            side = 'left' if parent['left'] == node["_id"] else 'right'
             if side == 'left':
                 self.index_collection.update(
-                    {"_id": parent['_id']},
-                    {"$set": {"left": right['_id']}}
+                    {"_id": parent["_id"]},
+                    {"$set": {"left": right["_id"]}}
                 )
             elif side == 'right':
                 self.index_collection.update(
-                    {"_id": parent['_id']},
-                    {"$set": {"right": right['_id']}}
+                    {"_id": parent["_id"]},
+                    {"$set": {"right": right["_id"]}}
                 )
 
         # Set orginal right's parent to node's original parent.
         self.index_collection.update(
-            {"_id": right['_id']},
-            {"$set": {"parent": node['parent'], "left": node['_id']}}
+            {"_id": right["_id"]},
+            {"$set": {"parent": node['parent'], "left": node["_id"]}}
         )
         # Set node's right child to right's original right child update parent
         # of node to original right child.
         self.index_collection.update(
-            {"_id": node['_id']},
-            {"$set": {"right": right['left'], "parent": right['_id']}}
+            {"_id": node["_id"]},
+            {"$set": {"right": right['left'], "parent": right["_id"]}}
         )
 
     def insert_tree(self, node):

@@ -50,8 +50,8 @@ class Client:
     __mapped_attr = {}
     ciphers = {}
 
-    def __init__(self, keys):
-
+    def __init__(self, keys, url = None):
+        self.keys = keys
         # Initializes all ciphers
         AES = aes.AES()
         AES.add_to_private_key("key", keys["AES"])
