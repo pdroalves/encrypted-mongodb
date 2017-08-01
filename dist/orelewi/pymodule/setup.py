@@ -2,7 +2,7 @@ from distutils.core import setup, Extension
 import numpy
 import os
 
-os.environ["CC"] = "clang"
+#os.environ["CC"] = "clang"
 
 # ore = Extension('LewiWuORE',
 #                 libraries=['crypto', 'ssl', 'gmp'],
@@ -28,7 +28,7 @@ oreblk = Extension('LewiWuOREBlk',
                                                     "-g",
                                                     "-lssl","-lcrypto"],
                 extra_compile_args=[
-                                    "-O3", "-Wall","-march=native"])
+                                    "-O3", "-Wall","-march=native", "-std=c11"])
 
 oreblk_leftright = Extension('LewiWuOREBlkLF',
                     libraries = ['crypto','ssl', 'gmp'],
@@ -44,7 +44,7 @@ oreblk_leftright = Extension('LewiWuOREBlkLF',
                                                     "-g",
                                                     "-lssl","-lcrypto"],
                 extra_compile_args=[
-                                    "-O3", "-Wall","-march=native"])
+                                    "-O3", "-Wall","-march=native", "-std=c11"])
 
 # setup(name='LewiWuORE',
 #       version='1.0',

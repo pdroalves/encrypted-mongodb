@@ -8,7 +8,6 @@ class ORE():
     def __init__(self):
         pass
 
-    # Generates a key using a hash of some passphrase
     # message space size N > 0
     # d-ary strings x = x_1x_2x_3...x_n
     def keygen(self, n=32, k=8):

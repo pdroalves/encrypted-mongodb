@@ -99,6 +99,7 @@ def main():
     ]
     # Setup client
     client = Client(Client.keygen())
+    print client.keys
     client.set_attr("name", "static")
     client.set_attr("address", "static")
     client.set_attr("age", "index")
@@ -110,22 +111,22 @@ def main():
                  url='mongodb://localhost:27017')
     s.open_database("test_sec")
     s.set_collection("gameofthrones")
-    s.drop_collection()
+    # s.drop_collection()
 
-    s.load_scripts()
+    # s.load_scripts()
 
     print("Starting now.")
-    start = time.time()
-    for i, doc in enumerate(docs):
-        enc_doc = client.encrypt(doc)
-        inserted_doc = s.insert(enc_doc)
-        node = EncryptedNode(client.ciphers["index"].encrypt(doc["age"]), inserted_doc)
-        s.insert_index(node, "age")
-        node = EncryptedNode(client.ciphers["index"].encrypt(doc["height"]), inserted_doc)
-        s.insert_index(node, "height")
+    # start = time.time()
+    # for i, doc in enumerate(docs):
+    #     enc_doc = client.encrypt(doc)
+    #     inserted_doc = s.insert(enc_doc)
+    #     node = EncryptedNode(client.ciphers["index"].encrypt(doc["age"]), inserted_doc)
+    #     s.insert_index(node, "age")
+    #     node = EncryptedNode(client.ciphers["index"].encrypt(doc["height"]), inserted_doc)
+    #     s.insert_index(node, "height")
 
     # print("Insert time: ", time.time() - start)
-    # result = [client.decrypt(x)["name"] for x in s.find()]
+    print [client.decrypt(x) for x in s.find()]
     # print("")
 
     print("People of 35 years old:")

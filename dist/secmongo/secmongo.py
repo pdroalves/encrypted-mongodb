@@ -80,7 +80,7 @@ class SecMongo:
     def set_collection(self, collection):
         assert type(collection) is str
         self.collection = self.db[collection]
-        self.index_collection = self.db["indexes-"+collection]
+        self.index_collection = self.db["indexes_"+collection]
 
     def find(self, index=None, relationship = 0, projection=None, iname=None):
         if index is None:
@@ -94,48 +94,52 @@ class SecMongo:
         #  between 30 and 40
         #
         #  The query MUST be encrypted
-
         # Get the tree root
         node = self.index_collection.find_one({"parent": None, "iname":iname})
         while node is not None:
             ctR = node["ctR"]  # b
             r = self.__ciphers["index"].compare(ctL, ctR)
-
+            # print r, node
             if relationship == 0: # Equality
                 if r == 0:
                     # Found
                     # a == b
-                    return self.collection.find({"_id": {"$in": node["index"]}})
+                    if projection:
+                        return self.collection.find(
+                            {"_id": {"$in": node["index"]}},
+                            projection = projection)
+                    else:
+                        return self.collection.find(
+                            {"_id": {"$in": node["index"]}}
+                            )
                 elif r == 1:
                     # a > b
                     node = self.index_collection.find_one(
                         {"_id": node["right"]}
                     )
                 else:
+                    assert r == -1
                     # a < b
                     node = self.index_collection.find_one(
                         {"_id": node["left"]}
                     )
-                    assert r == -1
             elif relationship == 1: # > than
                 if r == 0:
                     # Found
                     # a == b
                     return self.__get_branch(self.index_collection.find_one(
                                                 {"_id": node["right"]}
-                                            ))
+                                            ), projection = projection)
                 elif r == 1:
+                    # Found
+                    # a > b
+                    return self.__get_branch(node, projection = projection)
+                else:
+                    assert r == -1
                     # a < b
                     node = self.index_collection.find_one(
                         {"_id": node["right"]}
                     )
-                else:
-                    assert r == -1
-                    # Found
-                    # a > b
-                    return self.__get_branch(self.index_collection.find_one(
-                                                {"_id": node["right"]}
-                                            ))
             else: # < than
                 assert relationship == -1
                 if r == 0:
@@ -143,19 +147,19 @@ class SecMongo:
                     # a == b
                     return self.__get_branch(self.index_collection.find_one(
                                                 {"_id": node["left"]}
-                                            ))
+                                            ), projection = projection)
                 elif r == 1:
                     # a > b
-                    # Found
-                    return self.__get_branch(self.index_collection.find_one(
-                        {"_id": node["left"]}
-                    ))
-                else:
-                    assert r == -1
-                    # a < b
                     node = self.index_collection.find_one(
                         {"_id": node["left"]}
                     )
+                else:
+                    assert r == -1
+                    # a < b
+                    # Found
+                    return self.__get_branch(self.index_collection.find_one(
+                        {"_id": node["left"]}
+                    ), projection = projection)
 
         return None
 
@@ -193,6 +197,9 @@ class SecMongo:
 
     def insert(self, doc):
         return self.collection.insert(doc)
+
+    def insert_many(self, docs):
+        return self.collection.insert_many(docs).inserted_ids
 
     def print_index(self, node=None, spaces=0):
         if(not node):
@@ -235,7 +242,7 @@ class SecMongo:
             elif r == 1:
                 # index is higher than this node.
                 if node["right"] is None:
-                    # This was a leaf.
+                    # This is a leaf.
                     # Add right index
                     new = self.index_collection.insert_one({
                         "index": [index._id],
@@ -258,7 +265,7 @@ class SecMongo:
             elif r == -1:
                 # index is lower than this node.
                 if node["left"] is None:
-                    # This was a leaf.
+                    # This is a leaf.
                     # Add left index
                     new = self.index_collection.insert_one({
                         "index": [index._id],
@@ -278,12 +285,12 @@ class SecMongo:
                     node = self.index_collection.find_one(
                         {"_id": node["left"], "iname": iname}
                     )
-        self.db.system_js.update_height(self.index_collection.name,
-                                        new.inserted_id,
-                                        iname)
-        self.db.system_js.rebalance_avl(self.index_collection.name,
-                                        new.inserted_id,
-                                        iname)
+        # self.db.system_js.update_height(self.index_collection.name,
+        #                                 new.inserted_id,
+        #                                 iname)
+        # self.db.system_js.rebalance_avl(self.index_collection.name,
+        #                                 new.inserted_id,
+        #                                 iname)
 
         # self.balance_node(self.index_collection.find_one({"parent": None}))
 
@@ -405,24 +412,25 @@ class SecMongo:
             {"$set": {"right": right['left'], "parent": right['_id']}}
         )
 
-    def insert_tree(self, node):
+    def insert_tree(self, node, iname):
         if node is None:
             return None
         # Down the tree from its root, build a index-document and add to the
         # database.
         new_doc = {"index": node.me._id,  # pointer to data
                    "ctR": node.me.value[1],  # value used for selection
-                   "left": self.insert_tree(node.left),
-                   "right": self.insert_tree(node.right)}
+                   "left": self.insert_tree(node.left, iname),
+                   "right": self.insert_tree(node.right, iname)}
         if new_doc["left"]:
             new_doc["left"] = new_doc["left"].inserted_id
         if new_doc["right"]:
             new_doc["right"] = new_doc["right"].inserted_id
+        new_doc["iname"] = iname
         # print json.dumps(new_doc,4)
         return self.index_collection.insert_one(new_doc)
 
-    def insert_indexed(self, roottree, data):
-        # Receives AVL tree that index a list of elements Lewi's scheme
+    def insert_indexed(self, roottree, data, iname):
+        # Receives AVL tree that indexes a list of elements Lewi's scheme
 
         # Each node contains a pair composed by the right side of a ciphertext
         # and the index of a related element in the list data (IndexNode)
@@ -436,7 +444,7 @@ class SecMongo:
             data_indexes.append(self.insert(item))
 
         # Add indexes
-        root = self.insert_tree(roottree)
+        root = self.insert_tree(roottree, iname)
         # Add a tag to the root node
         self.index_collection.update({"_id": root.inserted_id},
                                      {"$set": {"root": "1"}})
@@ -502,10 +510,15 @@ class SecMongo:
         return False
 
     # Returns all entries indexed from that node
-    def __get_branch(self, node):
+    def __get_branch(self, node, projection = None):
         entries = []
         if node is not None:
-            entries.extend(self.collection.find({"_id": {"$in": node["index"]}}))
-            entries.extend(self.__get_branch(self.index_collection.find_one({"_id": node["right"]})))
-            entries.extend(self.__get_branch(self.index_collection.find_one({"_id": node["left"]})))
+            if projection:
+                entries.extend(self.collection.find({"_id": {"$in": node["index"]}}), projection = projection)
+                entries.extend(self.__get_branch(self.index_collection.find_one({"_id": node["right"]}), projection = projection))
+                entries.extend(self.__get_branch(self.index_collection.find_one({"_id": node["left"]}), projection = projection))
+            else:
+                entries.extend(self.collection.find({"_id": {"$in": node["index"]}}))
+                entries.extend(self.__get_branch(self.index_collection.find_one({"_id": node["right"]})))
+                entries.extend(self.__get_branch(self.index_collection.find_one({"_id": node["left"]})))
         return entries
