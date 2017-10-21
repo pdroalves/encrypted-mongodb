@@ -27,9 +27,10 @@ import json
 import generate_prime as Prime
 from .cipher import Cipher
 from Crypto.Random import random
-
+from numpy import power
 
 class Paillier(Cipher):
+    rating_cts = None
 
     @staticmethod
     def keygen(key_size=1024):
@@ -61,7 +62,7 @@ class Paillier(Cipher):
                  "lambda":l
                  }
                }
-
+        
         return keys
 
     def set_deterministic(self,r=None):
@@ -74,7 +75,9 @@ class Paillier(Cipher):
     def encrypt(self,m):
         if type(m) == str:
             m = int(m)
-            
+        if m in range(6) and self.rating_cts:
+            return self.rating_cts[m]            
+
         assert isinstance(m, (int, long))
 
         pub = Cipher.get_public_key(self)
@@ -84,7 +87,7 @@ class Paillier(Cipher):
         n = pub["n"]
         n2 = n*n if not pub.has_key("n2") else pub["n2"]
         if not pub.has_key("n2"):
-            pub["n2"] = n2
+            Cipher.add_to_public_key(self, "n2", n2)
         g = pub["g"]
         r = pub["r"] if pub.has_key("r") else random.randrange(1,n)
 
@@ -94,13 +97,11 @@ class Paillier(Cipher):
             g_m__n2 = self.__modinv(pow(g,-m,n2),n2)
         else:
             g_m__n2 = pow(g,m,n2)
-
         c = g_m__n2*pow(r,n,n2) % n2
         return str(c)
 
     def decrypt(self,c):
-        assert isinstance(c, (int, long))
-        c = long(c)    
+        c = int(c)    
 
         pub = Cipher.get_public_key(self)
         priv = Cipher.get_private_key(self)
@@ -111,6 +112,8 @@ class Paillier(Cipher):
 
         n = pub['n']
         n2 = n*n if not pub.has_key("n2") else pub["n2"]
+        if not pub.has_key("n2"):
+            Cipher.add_to_public_key(self, "n2", n2)
         g = pub['g']
         l = priv['lambda']
         mi = pow(l,l-1,n)

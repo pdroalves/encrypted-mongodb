@@ -58,7 +58,7 @@ void print128_num(__m128i var)
  */
 static int check_ore_blk() {
   int nbits = 32;
-  int block_len = 8;
+  int block_len = 4;
 
   uint64_t n1 = rand() % (((uint64_t) 1) << nbits);
   uint64_t n2 = rand() % (((uint64_t) 1) << nbits);
@@ -78,12 +78,12 @@ static int check_ore_blk() {
   ore_blk_secret_key sk;
   ERR_CHECK(ore_blk_setup(sk, params));
 
-  printf("prf_key:\n");
-  for(int i = 0; i < 16;i++)
-    print128_num(sk->prf_key.rd_key[i]);
-  printf("\nprp_key:\n");
-  for(int i = 0; i < 16;i++)
-    print128_num(sk->prp_key.rd_key[i]);
+  //printf("prf_key:\n");
+  //for(int i = 0; i < 16;i++)
+  //  print128_num(sk->prf_key.rd_key[i]);
+  //printf("\nprp_key:\n");
+  //for(int i = 0; i < 16;i++)
+  //  print128_num(sk->prp_key.rd_key[i]);
 
   ore_blk_ciphertext ctxt1;
   ERR_CHECK(init_ore_blk_ciphertext(ctxt1, params));
@@ -97,18 +97,20 @@ static int check_ore_blk() {
   ERR_CHECK(ore_blk_encrypt_ui(ctxt1, sk, n1));
   ERR_CHECK(ore_blk_encrypt_ui(ctxt2, sk, n2));
 
-  printf("ctx1 left:\n");
-  for(int i = 0; i < _py_ore_blk_ciphertext_len_left(ctxt1->params);i++)
-    printf("%d, ",ctxt1->comp_left[i]);
-  printf("ctx1 right:\n");
-  for(int i = 0; i < _py_ore_blk_ciphertext_len_right(ctxt1->params);i++)
-    printf("%d, ",ctxt1->comp_right[i]);
-  printf("ctx2 left:\n");
-  for(int i = 0; i < _py_ore_blk_ciphertext_len_left(ctxt2->params);i++)
-    printf("%d, ",ctxt2->comp_left[i]);
-  printf("ctx2 right:\n");
-  for(int i = 0; i < _py_ore_blk_ciphertext_len_right(ctxt2->params);i++)
-    printf("%d, ",ctxt2->comp_right[i]);
+  printf("ctx1 left size:%d\n",_py_ore_blk_ciphertext_len_left(ctxt1->params));
+  printf("ctx1 right size:%d\n",_py_ore_blk_ciphertext_len_right(ctxt1->params));
+  //printf("ctx1 left:\n");
+  //for(int i = 0; i < _py_ore_blk_ciphertext_len_left(ctxt1->params);i++)
+  //  printf("%d, ",ctxt1->comp_left[i]);
+  //printf("ctx1 right:\n");
+  //for(int i = 0; i < _py_ore_blk_ciphertext_len_right(ctxt1->params);i++)
+  //  printf("%d, ",ctxt1->comp_right[i]);
+  //printf("ctx2 left:\n");
+  //for(int i = 0; i < _py_ore_blk_ciphertext_len_left(ctxt2->params);i++)
+  //  printf("%d, ",ctxt2->comp_left[i]);
+  //printf("ctx2 right:\n");
+  //for(int i = 0; i < _py_ore_blk_ciphertext_len_right(ctxt2->params);i++)
+  //  printf("%d, ",ctxt2->comp_right[i]);
 
   int ret = 0;
   int res;

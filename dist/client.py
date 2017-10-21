@@ -4,7 +4,7 @@
 ##########################################################################
 #
 # mongodb-secure
-# Copyright (C) 2016, Pedro Alves and Diego Aranha
+# Copyright (C) 2017, Pedro Alves and Diego Aranha
 # {pedro.alves, dfaranha}@ic.unicamp.br
 
 # This program is free software: you can redistribute it and/or modify
@@ -43,11 +43,25 @@ def decode(x):
     x_dec = [chr(int(x[8 * i:8 * (i + 1)], 16)) for i in range(len(x) / 8)]
     return "".join(x_dec)
 
+def is_int(n):
+    try:
+        int(n)
+        return True
+    except:
+        return False
 
 class Client:
     __supported_attr_types = ["static", "index", "h_add", "h_mul",
                               "do_nothing"]
+    # 
+    # A map of attributes that should be encrypted as a particular class
+    # for instance, {static:[name, age, address, count], h_add:[count]} will
+    # tag attributes name, age, address and count to be encrypted as static and
+    # count to be encrypted also as h_add
+    # 
     __mapped_attr = {}
+
+    # Ciphers
     ciphers = {}
 
     def __init__(self, keys):
@@ -57,10 +71,13 @@ class Client:
         AES.add_to_private_key("key", keys["AES"])
 
         Paillier = paillier.Paillier()
-        Paillier.add_to_private_key("lambda",
-                                    keys["Paillier"]["priv"]["lambda"])
-        Paillier.add_to_public_key("n", keys["Paillier"]["pub"]["n"])
-        Paillier.add_to_public_key("g", keys["Paillier"]["pub"]["g"])
+        Paillier.add_to_private_key("lambda", 117668535328987834733689137263689797298977817639429644060749368527644686726669296731885251952344689212879739921514739655067928530440046015056096688399083645657472888121212951216520851399887876525989934400216686895826326664246358568791172640501226072668741206059249533639801502947840932944016267812429948585960L)
+        Paillier.add_to_public_key("n", 117668535328987834733689137263689797298977817639429644060749368527644686726669296731885251952344689212879739921514739655067928530440046015056096688399083667529605534667335757959902320130332095941714707811038322265779765008946794346684879884355233783223579740293554891297286661970157653473900579699481419234807L)
+        Paillier.add_to_public_key("g", 117668535328987834733689137263689797298977817639429644060749368527644686726669296731885251952344689212879739921514739655067928530440046015056096688399083667529605534667335757959902320130332095941714707811038322265779765008946794346684879884355233783223579740293554891297286661970157653473900579699481419234808L)
+        # Paillier.add_to_private_key("lambda",
+        #                             keys["Paillier"]["priv"]["lambda"])
+        # Paillier.add_to_public_key("n", keys["Paillier"]["pub"]["n"])
+        # Paillier.add_to_public_key("g", keys["Paillier"]["pub"]["g"])
 
         ElGamal = elgamal.ElGamal()
         ElGamal.add_to_public_key("p", keys["ElGamal"]["pub"]["p"])
@@ -94,62 +111,34 @@ class Client:
 
         return keys
 
+    # 
     # Encrypts a query
-
     # pt: plaintex
-    # kind: defines the purpose for which the document should be encrypted
-    # parent: the parent key
-    def encrypt(self, pt, kind="store", parent=None):
+    # 
+    def encrypt(self, pt, skip_index = False):
         global oreEncoder
+
         assert type(pt) == dict
-        ciphers = self.ciphers
         result = {}
-        # finds the lef
-        for key in pt:
-            if type(pt[key]) == dict:
-                result[key] = self.encrypt(pt[key], kind=kind, parent=key)
-            elif parent in ["$inc", "$dec", "$set"]:
-                # Update query
-                op_kind = self.__mapped_attr[key]
 
-                cipher = ciphers[op_kind]
-                result[key] = cipher.encrypt(pt[key])
-
-            elif key == "$in":
-                if type(pt[key]) not in [list, tuple]:
-                    result[key] = list(pt[key])
-                # Inside
-                op_kind = self.__mapped_attr[parent]
-                cipher = ciphers[op_kind]
-
-                # Encrypts all items
-                result[key] = []
-                for value in pt[key]:
-                    ct = cipher.encrypt(value)
-                    result[key].append(ct)
-
-            elif self.__mapped_attr[key] == "index":
-                # Encrypts as a index
-
-                # Currently this only supports database records with
-                # a single index element
-
-                op_kind = "index"
-                cipher = ciphers[op_kind]
-
-                # value = oreEncoder(pt[key]) if len(pt[key]) > 0 else "0"
-                ct = cipher.encrypt(pt[key])
-                result["index"] = ct[1]
-
-                # Encrypts as static
-                cipher = ciphers["static"]
-                result[key] = cipher.encrypt(pt[key])
+        # 
+        # Encrypts each key according to the map
+        # 
+        for attribute in pt:
+            if type(attribute) == dict:
+                result[attribute] = self.encrypt( pt[attribute], skip_index = skip_index )
+            elif attribute == "_id":
+                result[attribute] = pt[attribute]
+                continue
             else:
-                if kind in ["search", "update"]:
-                    continue
-                op_kind = self.__mapped_attr[key]
-                cipher = ciphers[op_kind]
-                result[key] = cipher.encrypt(pt[key])
+                result[attribute] = {}
+                for attribute_type in self.__mapped_attr:
+                    if attribute_type == "index" and skip_index:
+                        continue
+                    cipher = self.ciphers[attribute_type]
+                    if attribute in self.__mapped_attr[attribute_type]:
+                        # Add the related ciphertext for attribute_type
+                        result[attribute][attribute_type] = cipher.encrypt( pt[attribute])
         return result
 
     # Decrypts the return of a query
@@ -159,50 +148,53 @@ class Client:
         ciphers = self.ciphers
 
         result = {}
-        # finds the lef
-        for key in ct:
-            if key == "index":
-                # There is no feasible to decrypt a index
+
+        #
+        # Decrypts each key according to the map
+        # 
+        for attribute in ct:
+            if type(attribute) == dict:
+                result[attribute] = self.encrypt( ct[attribute], skip_index = skip_index )
+            elif attribute == "_id":
+                result[attribute] = ct[attribute]
                 continue
-            elif key == "_id":
-                result[key] = ct[key]
-            elif type(ct[key]) == dict:
-                result[key] = self.decrypt(ct[key])
-            elif type(ct[key]) in [tuple, list]:
-                op_kind = self.__mapped_attr[key]
-                cipher = ciphers[op_kind]
-
-                for value in ct[key]:
-                    pt = cipher.decrypt(value)
-                    result[self.__keyword_attr].append(pt)
-            elif self.__mapped_attr[key] == "index":
-                # Decrypt the static version
-                op_kind = "static"
-                cipher = ciphers[op_kind]
-
-                pt = cipher.decrypt(ct[key])
-                result[key] = pt
             else:
-                op_kind = self.__mapped_attr[key]
-                cipher = ciphers[op_kind]
-
-                pt = cipher.decrypt(ct[key])
-                result[key] = pt
-
+                result[attribute] = {}
+                for attribute_type in [x for x in self.__mapped_attr if x != "index"]:
+                    # 
+                    # There is no support for decryption of index attributes
+                    # 
+                    cipher = self.ciphers[attribute_type]
+                    if attribute in self.__mapped_attr[attribute_type]:
+                        # Add the related ciphertext for attribute_type
+                        result[attribute][attribute_type] = cipher.decrypt( ct[attribute][attribute_type])
+                        if is_int(result[attribute][attribute_type]):
+                            result[attribute][attribute_type] = int(result[attribute][attribute_type])
         return result
 
     def get_ctL(self, target):
-        # Returns the left encryption of some target
+        # Returns the left side of the ciphertext
         cipher = self.ciphers["index"]
         return cipher.encrypt(target)[0]
+
+    def get_ctR(self, target):
+        # Returns the right side of the ciphertext
+        cipher = self.ciphers["index"]
+        return cipher.encrypt(target)[1]
 
     def get_supported_attr_types(self):
         return tuple(self.__supported_attr_types)
 
+    # 
     # Maps an attribute to one of those supported fields
-    def set_attr(self, field, t):
-        assert type(field) == str
-        assert type(t) == str
-        assert t in self.__supported_attr_types
+    # 
+    def add_attr(self, name, attribute = "static"):
+        assert type(name) == str
+        assert type(attribute) == str
+        assert attribute in self.__supported_attr_types
 
-        self.__mapped_attr[field] = t
+        if attribute not in self.__mapped_attr.keys():
+            self.__mapped_attr[attribute] = [name]
+        else:
+            assert type(self.__mapped_attr[attribute]) == list
+            self.__mapped_attr[attribute].append(name)

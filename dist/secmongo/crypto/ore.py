@@ -18,6 +18,8 @@ class ORE():
         return self
 
     def encrypt(self, y):
+        if type(y) == str:
+            y = int(y)
         return ore.encrypt(y, self.sk, self.n, self.k)
 
     @staticmethod
@@ -27,11 +29,11 @@ class ORE():
 if __name__ == '__main__':
     orelf = ORE()
     sk = orelf.keygen()
+    ctA = orelf.encrypt(2)
     ctB = orelf.encrypt(1)
-    while True:
-        rand = random.randint(0, 2**8)
-        ctA = orelf.encrypt(rand)
     ctC = orelf.encrypt(3)
+
+    print ctA
 
     assert ORE.compare(ctA[0], ctA[1]) == 0
     assert ORE.compare(ctA[0], ctB[1]) == 1

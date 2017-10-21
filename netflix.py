@@ -1,6 +1,27 @@
 #!/usr/bin/python
 # coding:  utf-8
+# ##########################################################################
+##########################################################################
+#
+# mongodb-secure
+# Copyright (C) 2017, Pedro Alves and Diego Aranha
+# {pedro.alves, dfaranha}@ic.unicamp.br
 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+##########################################################################
+##########################################################################
+from pymongo import MongoClient
 from client import Client
 from secmongo import SecMongo
 from bson.json_util import dumps
@@ -18,6 +39,15 @@ from multiprocessing import Pool
 import itertools
 import Crypto
 import gc
+import tqdm
+import calendar
+from datetime import datetime
+from pymongo.errors import BulkWriteError
+import tempfile
+from bson.objectid import ObjectId
+from bson import json_util
+
+from itertools import chain,islice
 
 def load_data(inputfile):
     # Opens training dataset, read line-by-line and write in a list
@@ -30,150 +60,153 @@ def load_data(inputfile):
                 "movieid": movieid,
                 "customerid": int(rating[0]),
                 "rating": int(rating[1]),
-                "date": rating[2]
+                "date": calendar.timegm(datetime.strptime(rating[2], "%Y-%m-%d").timetuple())
                 })
 
     return docs              
 
-def load_directory(path, driver, client):
+def load_directory(path, N):
     # Loads all files in a directory
     (_, _, filenames) = walk(path).next()
     data = list()
-    for i, filename in enumerate(filenames[:100]):
-    # for i, filename in enumerate(filenames[:5]):
-        print "Remaining: %d/%d, " % (len(filenames) - i, len(filenames))
-        start = time.time()
-        data.extend(load_data(path + "/" + filename))
-        diff = time.time() - start
-        print "done in %ds" % (diff)
 
-    return data
+    p = Pool()
+    for result in tqdm.tqdm(p.imap_unordered(
+            load_data,
+            # [path + "/" + filename for filename in filenames]), 
+            [path + "/" + filename for filename in filenames[:1000]]), 
+        total=len(filenames)):
+        data.extend(result)
 
-def encrypt(args):
-    doc, [client, inames] = args
+        if len(data) >= N:
+            yield data
+            data = []
+    if len(data) > 0:
+        yield data
+        del data
+    p.close()
+    p.join()
+    p.terminate()
+
+def encrypt_static_parallel(args):
+    doc, client = args
     Crypto.Random.atfork()
+    return client.encrypt(doc)
 
-    enc_doc = client.encrypt(doc)
-    return [enc_doc] + [[(client.ciphers["index"].encrypt(doc[iname]), iname) for iname in inames]]
+enc_docs = []
+indexes_enc_docs = []
+docs = []
     
-
+##############################
 # Setup client
+start = time.time()
 client = Client(Client.keygen())
+client.ciphers["h_add"].rating_cts = [client.ciphers["h_add"].encrypt(m) for m in range(6)]
 print client.keys
-client.set_attr("movieid", "index")
-client.set_attr("customerid", "index")
-client.set_attr("rating", "index")
-client.set_attr("date", "static")
-inames = ["customerid","movieid","rating"]
-
-# Setup the MongoDB driver
-s = SecMongo(add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"], 2))
-s.open_database("test_sec")
-s.set_collection("netflix")
-# s.drop_collection()
-
-# # assert len(sys.argv) == 2
-# # path = sys.argv[1]
-# path = "/home/pdroalves/doutorado/netflix_dataset/training_set"
-
-# print "Starting now."
-# print "Training set path: %s" % path
-
-# start = time.time()
-# docs = load_directory(path, s, client)
-# print("Loading time: ", time.time() - start)
+# Attributes should be classified using add_attr(). This action will imply in
+# ciphertexts stored with all tagged attributes. There is no relation with
+# the indexing itself.
+client.add_attr(attribute = "static", name = "movieid")
+client.add_attr(attribute = "static", name = "customerid")
+client.add_attr(attribute = "static", name = "rating")
+client.add_attr(attribute = "static", name = "date")
+client.add_attr(attribute = "index", name = "date")
+client.add_attr(attribute = "index", name = "rating")
+client.add_attr(attribute = "h_add", name = "rating")
+# inames will be used for indexing
+inames = ["customerid", "movieid", "date"]
 
 ##############################
-# Encrypt data
+# Path to data
+# assert len(sys.argv) == 2
+# path = sys.argv[1]
+path = "/home/pdroalves/doutorado/netflix_dataset/training_set"
 
-# p = Pool()
-# start = time.time()
-# enc_docs = p.map(
-#     encrypt,
-#     itertools.izip(
-#         docs,
-#         itertools.repeat([client, inames])
-#         )
-#     )
-# p.close()
-# p.join()
+print "Starting now."
+print "Training set path: %s" % path
 
+##############################
+# Load plaintext
+                                     # 
+##############################
+# Setup the MongoDB driver
+s = SecMongo(url="gtxtitan", add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"], 2))
+s.open_database("netflix")
+s.set_collection("data")
+s.drop_collection()
+s.load_scripts()
 
-# diff = time.time() - start
-# print "Encryption time for %d docs: %f (%f doc/s)" % (len(enc_docs), diff, len(enc_docs)/diff)
-#############################3
-# Encrypt indexes
-def build_index(docs, iname):
-    # import pdb;pdb.set_trace()
-    root = AVLTree([docs[0][iname],0],nodeclass=IndexNode)
-    for i,doc in enumerate(docs[1:]):
-        root = root.insert([doc[iname],i+1])
-    return root
+# Load
+N = 100000
+start = time.time()
+for chunk in load_directory(path,N):
+    docs.extend(chunk)
 
-def encrypt_index(args):
-    index, client = args
-    index.encrypt(client.ciphers["index"])
+print "Load: %.2fs" % (time.time() - start)
+for i, _ in enumerate(docs):
+    docs[i]["_id"] = i # Add an id
+print "Documents loaded: %d" % len(docs)
 
-# Build a index
-# # start = time.time()
-# # indexes = [build_index(docs, iname) for iname in inames]
-# # diff = time.time() - start
-# # print "Building indexes time for %d docs per index: %f (%f doc/s)" % (len(enc_docs), diff, len(inames)*len(enc_docs)/diff)
+# Gen indexes
+start = time.time()
+for iname in inames:
+    # Gen the index for iname
+    indexes_docs = s.mem_ordered_build_index(docs, iname, client)
+    s.insert_mem_tree(indexes_docs)
+print "Indexes generated: %.2fs (%.2f doc/s)" % (time.time() - start, len(docs)/(time.time() - start))
 
-# del docs
-# docs = None
-# gc.collect()
+def chunks(iterable, size=100000):
+        iterator = iter(iterable)
+        for first in iterator:
+            yield chain([first], islice(iterator, size - 1))
+            
+# Encrypt
+start = time.time()
+p = Pool()
+N = 100000
+for c in chunks(docs, size = N):
+	enc_docs = []
+	for result in tqdm.tqdm(p.imap_unordered(
+	    encrypt_static_parallel,
+	    itertools.izip(
+	        c,
+	        itertools.repeat(client)
+	        )), total=min(N, len(docs))):
+	    enc_docs.append(result)
 
-# start = time.time()
-# # p.map(encrypt_index, itertools.izip(indexes, itertools.repeat(client)))
-# for index in indexes:
-#     index.encrypt(client.ciphers["index"])
-# diff = time.time() - start
-# print "Encrypting indexes time for %d docs: %f (%f doc/s)" % (len(enc_docs), diff, len(enc_docs)/diff)
+	target_customer_id = docs[0]["customerid"]
 
-# #############################3
-# # Insert indexes
-# # 
-# start = time.time()
-# for iname, index in zip(inames, indexes):
-#     s.insert_indexed(index, [x[0] for x in enc_docs], iname)
-# diff = time.time() - start
-# print "Inserting time for %d docs: %f (%f doc/s)" % (len(enc_docs), diff, len(enc_docs)/diff)
-# 
+	print enc_docs[0]
+	# Insert ciphertexts
+	try:
+		s.insert_many(enc_docs)
+	except BulkWriteError as exc:
+		print exc.details
+		exit(1)
+	print "Chunk processed."
+print "Encrypt: %.2fs (%.2f doc/s)" % (time.time() - start, len(docs)/(time.time() - start))
+p.close()
+p.join()
+p.terminate()
 
-# print("Starting now.")
-# start = time.time()
-# for i, pack in enumerate(enc_docs):
-#     print "%d / %d " % (i, len(enc_docs))
-#     enc_doc = pack[0]
-#     inserted_doc = s.insert(enc_doc)
-#     for iname_pack in pack[1]:
-#         value, iname = iname_pack
-#         # print iname
-#         node = EncryptedNode(value, inserted_doc)
-#         s.insert_index(node, iname)
+print "Insert encrypt docs: %.2fs (%.2f doc/s)" % (time.time() - start, len(docs)/(time.time() - start))
 
+##############################
+# Queries
 import json
+def parse(doc):
+    parsed_doc = {}
+    keys = doc.keys()
+    for key in keys:
+        if key == "_id":
+            parsed_doc[key] = doc[key]
+        elif "static" in doc[key]:
+            parsed_doc[key] = doc[key]["static"]
+    return parsed_doc
 
-print "Customer 752642: "
-# Expect to return 30 items
-projection = ["movieid", "rating"]
-result = [client.decrypt(x) for x in s.find(client.get_ctL(752642), iname="customerid", projection = projection)]
+print "Customer %d: " % target_customer_id
+projection = ["movieid", "rating", "customerid", "date"]
+result = [client.decrypt(x) for x in s.find(client.get_ctL(target_customer_id), iname="customerid", projection = projection)]
 print "%d results" % len(result)
 for r in result:
-    r.pop("_id")
-    print json.dumps(r, indent=4)
-
-print "Movie 2808: "
-projection = ["customerid", "rating", "date"]
-result = [client.decrypt(x) for x in s.find(client.get_ctL(2808), iname="movieid", projection = projection)]
-for r in result:
-    r.pop("_id")
-    print json.dumps(r, indent=4)
-
-print "Movies with rating 5:"
-projection = ["movieid"]
-result = [client.decrypt(x) for x in s.find(client.get_ctL(5), iname="rating", projection = projection)]
-for r in result:
-    r.pop("_id")
-    print json.dumps(r, indent=4)
+    print json.dumps(parse(r), indent=4)

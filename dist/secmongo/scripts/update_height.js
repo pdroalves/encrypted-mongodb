@@ -1,8 +1,7 @@
-function(name, node_id){
+function(name, index_name){
     var left, right, new_node, parent;
     var collection = db.getCollection(name);
-    new_node = collection.findOne({_id: node_id});
-    parent = collection.findOne({_id: new_node['parent']});
+    parent = collection.findOne({parent: null, iname: index_name});
     while(parent != null){
         left_height = get_height(collection.findOne({_id: parent['left']}));
         right_height = get_height(collection.findOne({_id: parent['right']}));
