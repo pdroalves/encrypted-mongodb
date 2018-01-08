@@ -10,22 +10,32 @@ Advisor: [Diego F. Aranha](http://www.ic.unicamp.br/~dfaranha). <br/>
 
 ## About
 
-This is a proof of concept implementation of the framework proposed by [Alves and Aranha (2016)] with the purpose of offering a wrapper on MongoDB's Python driver that enables a application to store and query encrypted data on the database.
+This is a proof of concept implementation of the framework proposed by [Alves and Aranha (2018)] with the purpose of offering a wrapper on MongoDB's Python driver that enables a application to store and query encrypted data on the database.
 
 ## Citing
 Please cite using the template below:
 
-	@INPROCEEDINGS{Alves2016,
- 		author = {{Alves, Pedro and Aranha, Diego}},
-  		title = {{A framework for searching encrypted databases}},
-  		year = 2016,
-  		BOOKTITLE= {{Anais do XVI Simpósio Brasileiro em Segurança da Informação e de Sistemas Computacionais (SBSeg 2016)}},
+	@Article{Alves2018,
+	author="M. R. Alves, Pedro G.
+	and Aranha, Diego F.",
+	title="A framework for searching encrypted databases",
+	journal="Journal of Internet Services and Applications",
+	year="2018",
+	month="Jan",
+	day="03",
+	volume="9",
+	number="1",
+	pages="1",
+	issn="1869-0238",
+	doi="10.1186/s13174-017-0073-0",
+	url="https://doi.org/10.1186/s13174-017-0073-0"
 	}
+
 
 
 # Licensing
 
-mongodb-secure is released under an GPLv3 license.
+This code is released under an GPLv3 license.
 
 ## Disclaimer
 
