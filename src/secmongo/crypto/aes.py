@@ -26,6 +26,7 @@ from Crypto import Cipher as CryptoCipher
 from Crypto import Random
 # from Crypto.Hash import SHA256
 import hashlib
+import base64
 
 BS = 16
 
@@ -43,20 +44,12 @@ class AES(Cipher):
     # Generates a key using a hash of some passphrase
     @staticmethod
     def keygen(passphrase, secure=128):
-        # if secure == 256:
-        #     h = SHA256.new()
-        # elif secure == 512:
-        #     h = SHA256.new()
-        # else:
-        #     raise Exception("Unsupported security level")
-        # h.update(passphrase)
-        # return h.hexdigest()
-        return hashlib.sha256(passphrase).digest()
+        return base64.b64encode(hashlib.sha256(passphrase).digest())
 
     def encrypt(self, raw):
         raw = pad(str(raw))
         iv = Random.new().read(CryptoCipher.AES.block_size)
-        cipher = CryptoCipher.AES.new(self.get_private_key()['key'],
+        cipher = CryptoCipher.AES.new(base64.b64decode(self.get_private_key()['key']),
                                       CryptoCipher.AES.MODE_CBC,
                                       iv)
         return base64.b64encode(iv + cipher.encrypt(raw))
@@ -64,7 +57,7 @@ class AES(Cipher):
     def decrypt(self, enc):
         enc = base64.b64decode(enc)
         iv = enc[:16]
-        cipher = CryptoCipher.AES.new(self.get_private_key()['key'],
+        cipher = CryptoCipher.AES.new(base64.b64decode(self.get_private_key()['key']),
                                       CryptoCipher.AES.MODE_CBC,
                                       iv)
         return unpad(cipher.decrypt(enc[16:]))

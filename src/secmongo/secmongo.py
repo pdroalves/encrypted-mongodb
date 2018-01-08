@@ -43,6 +43,10 @@ class StopLookingForThings(Exception):
 class SecMongo:
     ASCENDING = pymongo.ASCENDING
     DESCENDING = pymongo.DESCENDING
+    RANGE_OP = 42
+    EQUALITY_OP = 0
+    GREATER_OP = 1
+    LOWER_OP = -1
 
     client = None
     db = None
@@ -260,7 +264,7 @@ class SecMongo:
         for i, query in enumerate(queries):
             iname, relationship, value = query
 
-            if relationship == 42:
+            if relationship == self.RANGE_OP:
                 # range
                 # The outcome for this condition
                 query_results.append(self.find_range(

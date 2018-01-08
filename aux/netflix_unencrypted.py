@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env ipython
 # coding: utf-8
 ##########################################################################
 ##########################################################################
@@ -30,9 +30,17 @@ from pymongo import MongoClient
 from IPython import get_ipython
 ipython = get_ipython()
 
-client = MongoClient("gtxtitan")
+##############################
+# Input parameters
+url = "localhost"
+
+##############################
+# Setup client
+client = MongoClient(url)
 netflix = client.get_database("unencrypted_netflix").data
 
+##############################
+# Queries
 aid = 1061110
 bid = 2486445
 mid = 6287
@@ -41,28 +49,31 @@ end_date = 1072915200
 rate_hated = 2
 rate_loved = 4
 
+# 
+# Equation 1: Movies rated by Alice
+# 
+print "Equation 1"
+ipython.magic("timeit list(netflix.find({'movieid':mid}, projection = {'customerid':1}))")
+
 print "Equation 2"
 ipython.magic("timeit list(netflix.find({'customerid':aid}, projection = {'movieid':1}))")
 
-print "Equation 4"
-ipython.magic("timeit list(netflix.find({'movieid':mid}, projection = {'customerid':1}))")
-
-print "Equation 5"
+print "Equation 3"
 ipython.magic("timeit sum([int(x['rating']) for x in netflix.find({'customerid':aid, 'date':{'$gt':start_date}, 'date':{'$lt':end_date}})])")
 
-print "Equation 6"
+print "Equation 4"
 ipython.magic("timeit sum([int(x['rating']) for x in netflix.find({'$and':[{'movieid':mid}, {'date':{'$gt':start_date}}, {'date':{'$lt':end_date}}]})])")
 
-print "Equation 7"
+print "Equation 5"
 ipython.magic("timeit first = end_date - netflix.find({'customerid':aid}, projection = {'date':1}).sort('date',pymongo.ASCENDING).next()['date']")
 
-print "Equation 8"
+print "Equation 6"
 ipython.magic("timeit list(netflix.find({'$and':[{'movieid':mid}, {'rating':{'$lt':rate_hated}}]}))")
 
-print "Equation 9"
+print "Equation 7"
 ipython.magic("timeit list(netflix.find({'$and':[{'movieid':mid}, {'rating':{'$gt':rate_loved}}]}))")
 
-print "Equation 11"
+print "Equation 9"
 def similarity_set(A, B):
 	C = set([x['movieid'] for x in A]).intersection(set([x['movieid'] for x in B]))
 	result = []

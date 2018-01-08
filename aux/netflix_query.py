@@ -105,44 +105,44 @@ rate_loved = client.get_ctL(4)
 # Print
 print "AID: %d, MID: %d" % (AID, MID)
 
-# # Testing:
-# # 
-# # Equation 2: Movies rated by Alice
-# # 
-# print "Equation 2:"
-# result = s.find(
-# 				index = client.get_ctL(AID),
-# 				iname = "customerid",
-# 				projection = ["movieid", "customerid", "date"]
-# 				)
-# %timeit list(s.find( index = AID_ctL, iname = "customerid", projection = ["movieid", "customerid"] ))
-# print all([True if (int(parse(client.decrypt(x))["customerid"]) == AID) else False
-# 		for x in result
-# 		]
-# 	) and result.count() > 0
+# Testing:
+# 
+# Equation 2: Movies rated by Alice
+# 
+print "Equation 2:"
+result = s.find(
+				index = client.get_ctL(AID),
+				iname = "customerid",
+				projection = ["movieid", "customerid", "date"]
+				)
+%timeit list(s.find( index = AID_ctL, iname = "customerid", projection = ["movieid", "customerid"] ))
+print all([True if (int(parse(client.decrypt(x))["customerid"]) == AID) else False
+		for x in result
+		]
+	) and result.count() > 0
 	                
-# # Use this result to set a period of time
-# result.rewind()
-# result = list(result)
-# result.sort(key = lambda x: parse(client.decrypt(x))["date"])
+# Use this result to set a period of time
+result.rewind()
+result = list(result)
+result.sort(key = lambda x: parse(client.decrypt(x))["date"])
 
-# # 
-# # Equation 4: Users that rated M
-# # 
-# print "Equation 4:"
-# result = s.find(
-# 			index = MID_ctL,
-# 			iname = "movieid",
-# 			projection = ["movieid", "customerid"]
-# 			)
+# 
+# Equation 4: Users that rated M
+# 
+print "Equation 4:"
+result = s.find(
+			index = MID_ctL,
+			iname = "movieid",
+			projection = ["movieid", "customerid"]
+			)
 
-# %timeit list(s.find( index = MID_ctL, iname = "movieid", projection = ["movieid", "customerid"]))
+%timeit list(s.find( index = MID_ctL, iname = "movieid", projection = ["movieid", "customerid"]))
 
 
-# print all([True if (int(parse(client.decrypt(x))["movieid"]) == MID) else False
-# 		for x in result
-# 		]
-# 	) and result.count() > 0
+print all([True if (int(parse(client.decrypt(x))["movieid"]) == MID) else False
+		for x in result
+		]
+	) and result.count() > 0
 # 
 # Equation 5: Average of Alice's ratings over time
 # 
@@ -196,109 +196,109 @@ print all(	[True if (	int(parse(client.decrypt(x))["movieid"]) == MID and
 	]
 )
 #
-# # Equation 7: Number of days since Alice's first rating
-# #
-# # Get Alice ratings, sort and get the oldest. Compute: t - oldest mod n2
-# #
-# outcome = [x for x in s.find(
-# 				index = client.get_ctL(AID),
-# 				iname = "customerid",
-# 				projection = ["date", "customerid"]
-# 				)]
-# %timeit list(s.find( index = AID_ctL, iname = "customerid", projection = ["date", "customerid"]))
-# %timeit outcome.sort(cmp = lambda x, y: client.ciphers["index"].compare(x[iname]["index"][0],y[iname]["index"][1]))
-# outcome.sort(cmp = lambda x, y: client.ciphers["index"].compare(x[iname]["index"][0],y[iname]["index"][1]))
+# Equation 7: Number of days since Alice's first rating
+#
+# Get Alice ratings, sort and get the oldest. Compute: t - oldest mod n2
+#
+outcome = [x for x in s.find(
+				index = client.get_ctL(AID),
+				iname = "customerid",
+				projection = ["date", "customerid"]
+				)]
+%timeit list(s.find( index = AID_ctL, iname = "customerid", projection = ["date", "customerid"]))
+%timeit outcome.sort(cmp = lambda x, y: client.ciphers["index"].compare(x[iname]["index"][0],y[iname]["index"][1]))
+outcome.sort(cmp = lambda x, y: client.ciphers["index"].compare(x[iname]["index"][0],y[iname]["index"][1]))
 
-# # How to sort?
-# print "Equation 7: %s" % all(
-# 	[True if (int(parse(client.decrypt(x))["customerid"]) == AID) else False
-# 		for x in outcome
-# 	]
-# )
+# How to sort?
+print "Equation 7: %s" % all(
+	[True if (int(parse(client.decrypt(x))["customerid"]) == AID) else False
+		for x in outcome
+	]
+)
 
-# #
-# # Equation 8: Quantity of users who hated M
-# #
-# # Get all users that rated M and compare to rate_hated
-# #
-# outcome = s.find(
-# 			index = MID_ctL,
-# 			iname = "movieid",
-# 			projection = ["rating"]
-# 			)
-# %timeit s.find( index = MID_ctL, iname = "movieid", projection = ["rating"] )
-# count = 0
-# ore_compare = lambda x, y: client.ciphers["index"].compare(x,y)
+#
+# Equation 8: Quantity of users who hated M
+#
+# Get all users that rated M and compare to rate_hated
+#
+outcome = s.find(
+			index = MID_ctL,
+			iname = "movieid",
+			projection = ["rating"]
+			)
+%timeit s.find( index = MID_ctL, iname = "movieid", projection = ["rating"] )
+count = 0
+ore_compare = lambda x, y: client.ciphers["index"].compare(x,y)
 
-# hold = [client.get_ctR(parse(client.decrypt(x))["rating"]) for x in outcome]
-# count = sum([1 if (ore_compare(rate_hated, enc_rate) == 1) else 0 for enc_rate in hold])
-# %timeit sum([1 if (ore_compare(rate_hated, enc_rate["rating"]["index"]) == 1) else 0 for enc_rate in outcome])
-# print "Equation 8: %s" % all(
-# 	[True if (int(parse(client.decrypt(x))["movieid"]) == MID) else False
-# 		for x in outcome
-# 	] + [count > 0]
-# )
+hold = [client.get_ctR(parse(client.decrypt(x))["rating"]) for x in outcome]
+count = sum([1 if (ore_compare(rate_hated, enc_rate) == 1) else 0 for enc_rate in hold])
+%timeit sum([1 if (ore_compare(rate_hated, enc_rate["rating"]["index"]) == 1) else 0 for enc_rate in outcome])
+print "Equation 8: %s" % all(
+	[True if (int(parse(client.decrypt(x))["movieid"]) == MID) else False
+		for x in outcome
+	] + [count > 0]
+)
 
 
-# #
-# # Equation 9: Quantity of users who loved M
-# #
-# # Get all users that rated M and compare to rate_loved
-# #
-# outcome = s.find(
-# 			index = MID_ctL,
-# 			iname = "movieid",
-# 			projection = ["rating"]
-# 			)
-# count = 0
+#
+# Equation 9: Quantity of users who loved M
+#
+# Get all users that rated M and compare to rate_loved
+#
+outcome = s.find(
+			index = MID_ctL,
+			iname = "movieid",
+			projection = ["rating"]
+			)
+count = 0
 
-# count = sum([1 if (ore_compare(client.get_ctL(rate_loved), enc_rate["rating"]["index"]) == -1) else 0 for enc_rate in outcome])
-# %timeit s.find( index = MID_ctL, iname = "movieid", projection = ["rating"] )
-# %timeit sum([1 if (ore_compare(client.get_ctL(rate_loved), enc_rate["rating"]["index"]) == -1) else 0 for enc_rate in outcome])
-# print "Equation 9: %s" % all(
-# 	[True if (int(parse(client.decrypt(x))["movieid"]) == MID) else False
-# 		for x in outcome
-# 	] + [count > 0]
-# )
+count = sum([1 if (ore_compare(client.get_ctL(rate_loved), enc_rate["rating"]["index"]) == -1) else 0 for enc_rate in outcome])
+%timeit s.find( index = MID_ctL, iname = "movieid", projection = ["rating"] )
+%timeit sum([1 if (ore_compare(client.get_ctL(rate_loved), enc_rate["rating"]["index"]) == -1) else 0 for enc_rate in outcome])
+print "Equation 9: %s" % all(
+	[True if (int(parse(client.decrypt(x))["movieid"]) == MID) else False
+		for x in outcome
+	] + [count > 0]
+)
 
-# #
-# # Equation 11: Users similar to Alice
-# #
-# def similarity_set(A, B):
-# 	C = []
+#
+# Equation 11: Users similar to Alice
+#
+def similarity_set(A, B):
+	C = []
 
-# 	for x in B:
-# 		for y in A:
-# 			if ore_compare(x["movieid"]["index"][0], y["movieid"]["index"][1]) == 0:
-# 				C.append([x["rating"]["h_add"], y["rating"]["h_add"]])
-# 	return C
-# A = s.find(
-# 	index = AID_ctL,
-# 	iname = "customerid",
-# 	projection = ["movieid","rating"]
-# 	)
+	for x in B:
+		for y in A:
+			if ore_compare(x["movieid"]["index"][0], y["movieid"]["index"][1]) == 0:
+				C.append([x["rating"]["h_add"], y["rating"]["h_add"]])
+	return C
+A = s.find(
+	index = AID_ctL,
+	iname = "customerid",
+	projection = ["movieid","rating"]
+	)
 
-# B = s.find(
-# 	index = BID_ctL,
-# 	iname = "customerid",
-# 	projection = ["movieid", "rating"]
-# 	)
-# %timeit s.find( index = AID_ctL, iname = "customerid", projection = ["movieid","rating"], return_ids = True )
-# %timeit s.find( index = BID_ctL, iname = "customerid", projection = ["movieid","rating"], return_ids = True )
+B = s.find(
+	index = BID_ctL,
+	iname = "customerid",
+	projection = ["movieid", "rating"]
+	)
+%timeit s.find( index = AID_ctL, iname = "customerid", projection = ["movieid","rating"], return_ids = True )
+%timeit s.find( index = BID_ctL, iname = "customerid", projection = ["movieid","rating"], return_ids = True )
 
-# S = similarity_set(A, B)
-# %timeit similarity_set(A, B)
-# def egcd(a, b):
-#     if a == 0:
-#         return (b, 0, 1)
-#     else:
-#         g, y, x = egcd(b % a, a)
-#         return (g, x - (b // a) * y, y)
+S = similarity_set(A, B)
+%timeit similarity_set(A, B)
+def egcd(a, b):
+    if a == 0:
+        return (b, 0, 1)
+    else:
+        g, y, x = egcd(b % a, a)
+        return (g, x - (b // a) * y, y)
 
-# def modinv(a, m):
-#     g, x, y = egcd(a, m)
-#     if g != 1:
-#         raise Exception('modular inverse does not exist')
-#     else:
-#         return x % m
-# %timeit reduce(lambda x,y: x*y % n2, [x*modinv(y,n2) % n2 for (x,y) in S])
+def modinv(a, m):
+    g, x, y = egcd(a, m)
+    if g != 1:
+        raise Exception('modular inverse does not exist')
+    else:
+        return x % m
+%timeit reduce(lambda x,y: x*y % n2, [x*modinv(y,n2) % n2 for (x,y) in S])
