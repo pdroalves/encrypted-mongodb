@@ -1,9 +1,9 @@
-# mongodb-secure
+# A proof-of-concept searchable encryption backend for MongoDB
 
 [University of Campinas](http://www.unicamp.br), [Institute of Computing](http://www.ic.unicamp.br), Brazil.
 
 Laboratory of Security and Cryptography - [LASCA](http://www.lasca.ic.unicamp.br),<br>
-Laboratório Multidisciplinar de Computação de Alto Desempenho - [LMCAD](http://www.lmcad.ic.unicamp.br). <br>
+Multidisciplinary High Performance Computing Lab - [LMCAD](http://www.lmcad.ic.unicamp.br). <br>
 
 Author: [Pedro G. M. R. Alves](http://www.iampedro.com), PhD. student @ IC-UNICAMP,<br/>
 Advisor: [Diego F. Aranha](http://www.ic.unicamp.br/~dfaranha). <br/>
