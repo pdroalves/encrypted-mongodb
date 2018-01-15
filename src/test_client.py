@@ -11,6 +11,18 @@ import json
 import re
 import time
 
+def parse(docs):
+    for i, doc in enumerate(docs):
+        keys = doc.keys()
+        for key in keys:
+            if key == "_id":
+                continue
+            elif "static" in doc[key]:
+                docs[i][key] = doc[key]["static"]
+            else:
+                docs[i].pop(key)
+    return docs
+
 
 def main():
     #
@@ -121,7 +133,7 @@ def main():
     # Setup the MongoDB driver
     s = SecMongo(add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"],
                                       2),
-                 url='mongodb://localhost:27017')
+                 url='gtxtitan')
     s.open_database("test_sec")
     s.set_collection("gameofthrones")
     s.drop_collection()
@@ -172,15 +184,6 @@ def main():
     print "Insert time: ", time.time() - start
     ##############################
     # Queries
-    def parse(docs):
-        for i, doc in enumerate(docs):
-            keys = doc.keys()
-            for key in keys:
-                if "static" in doc[key]:
-                    docs[i][key] = doc[key]["static"]
-                else:
-                    docs[i].pop(key)
-        return docs
 
     docs.sort()
 
@@ -198,42 +201,42 @@ def main():
     results = parse(results)
     results = [dict(t) for t in set([tuple(d.items()) for d in results])]
     results.sort()
-    print [x["name"] for x in results] == [x["name"] for x in docs if x["age"] > 35]
+    print set([x["name"] for x in results]) == set([x["name"] for x in docs if x["age"] > 35])
     
     print "People younger than 35 years old:",
     results = [client.decrypt(doc) for doc in s.find(index=client.get_ctL(35), iname = "age", relationship = 1)]
     results = parse(results)
     results = [dict(t) for t in set([tuple(d.items()) for d in results])]
     results.sort()
-    print [x["name"] for x in results] == [x["name"] for x in docs if x["age"] < 35]
+    print set([x["name"] for x in results]) == set([x["name"] for x in docs if x["age"] < 35])
 
     print "People of height 10:",
     results = [client.decrypt(doc) for doc in s.find(index=client.get_ctL(10), iname = "height", relationship = 0)]
     results = parse(results)
     results = [dict(t) for t in set([tuple(d.items()) for d in results])]
     results.sort()
-    print [x["name"] for x in results] == [x["name"] for x in docs if x["height"] == 10]
+    print set([x["name"] for x in results]) == set([x["name"] for x in docs if x["height"] == 10])
 
     print "People taller than height 10:",
     results = [client.decrypt(doc) for doc in s.find(index=client.get_ctL(10), iname = "height", relationship = -1)]
     results = parse(results)
     results = [dict(t) for t in set([tuple(d.items()) for d in results])]
     results.sort()
-    print [x["name"] for x in results] == [x["name"] for x in docs if x["height"] > 10]
+    print set([x["name"] for x in results]) == set([x["name"] for x in docs if x["height"] > 10])
 
     print "People smaller than height 10:",
     results = [client.decrypt(doc) for doc in s.find(index=client.get_ctL(10), iname = "height", relationship = 1)]
     results = parse(results)
     results = [dict(t) for t in set([tuple(d.items()) for d in results])]
     results.sort()
-    print [x["name"] for x in results] == [x["name"] for x in docs if x["height"] < 10]
+    print set([x["name"] for x in results]) == set([x["name"] for x in docs if x["height"] < 10])
 
     print "People smaller than height 10 with more than 30 years old:",
     results = [client.decrypt(doc) for doc in s.find_nested([["age", -1, client.get_ctL(30)], ["height", 1, client.get_ctL(10)]])]
     results = parse(results)
     results = [dict(t) for t in set([tuple(d.items()) for d in results])]
     results.sort()
-    print [x["name"] for x in results] == [x["name"] for x in docs if x["height"] < 10 and x["age"] > 30]
+    print set([x["name"] for x in results]) == set([x["name"] for x in docs if x["height"] < 10 and x["age"] > 30])
 
 if __name__ == '__main__':
     main()

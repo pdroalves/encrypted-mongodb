@@ -95,6 +95,38 @@ def encrypt_static_parallel(args):
     Crypto.Random.atfork()
     return client.encrypt(doc)
 
+def query_yes_no(question, default="yes"):
+    """Ask a yes/no question via raw_input() and return their answer.
+
+    "question" is a string that is presented to the user.
+    "default" is the presumed answer if the user just hits <Enter>.
+        It must be "yes" (the default), "no" or None (meaning
+        an answer is required of the user).
+
+    The "answer" return value is True for "yes" or False for "no".
+    """
+    valid = {"yes": True, "y": True, "ye": True,
+             "no": False, "n": False}
+    if default is None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError("invalid default answer: '%s'" % default)
+
+    while True:
+        sys.stdout.write(question + prompt)
+        choice = raw_input().lower()
+        if default is not None and choice == '':
+            return valid[default]
+        elif choice in valid:
+            return valid[choice]
+        else:
+            sys.stdout.write("Please respond with 'yes' or 'no' "
+                             "(or 'y' or 'n').\n")
+
 ##############################
 # The call for this script must have a single parameter with the path to the 
 # dataset
@@ -166,7 +198,10 @@ def main():
     print "Establishing connection to the database... ",
     s = SecMongo(url=options.url, add_cipher_param=pow(client.ciphers["h_add"].keys["pub"]["n"], 2))
     s.open_database("netflix")
-    s.set_collection("data2")
+    s.set_collection("data")
+    confirmation = query_yes_no("We are going to drop %s.%s. Are you sure you want to continue?" % (s.client.name, s.collection.name), default="no")
+    if confirmation is False:
+	exit(1)
     s.drop_collection()
     s.load_scripts()
     print "Done"
